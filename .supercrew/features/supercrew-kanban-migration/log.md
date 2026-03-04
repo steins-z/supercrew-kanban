@@ -18,3 +18,7 @@
 - Updated status: `planning` → `active`
 - Progress: 8/12 tasks complete (67%)
 - Remaining: progress bar on cards, markdown rendering, optional backend types, empty state guidance
+
+## 2026-03-04 — Status: active → done
+
+- Reason: Feature marked as completed by user
