@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "board": "Board"
+  },
+  "sidebar": {
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "logout": "Sign out",
+    "disconnect": "Disconnect repo",
+    "disconnectConfirm": "Disconnect from this repo? You can reconnect later."
+  },
+  "board": {
+    "loading": "Loading…",
+    "columns": {
+      "planning": "Planning",
+      "designing": "Designing",
+      "ready": "Ready",
+      "active": "Active",
+      "blocked": "Blocked",
+      "done": "Done"
+    }
+  },
+  "login": {
+    "subtitle": "A crew isn't just people anymore.",
+    "githubLogin": "Sign in with GitHub",
+    "errors": {
+      "no_code": "GitHub didn't return an auth code, please try again",
+      "token_failed": "GitHub authorization failed, please try again",
+      "access_denied": "You cancelled the authorization",
+      "unknown": "An error occurred during login, please try again"
+    }
+  },
+  "callback": {
+    "signingIn": "Signing in…"
+  },
+  "welcome": {
+    "step1": {
+      "title": "Welcome to Super Crew",
+      "feature1": "Your repo is your workspace — no extra SaaS, no data export",
+      "feature2": "AI agents that actually ship — they pick up tasks, do the work, deliver",
+      "feature3": "One board for the whole crew — humans and agents, real-time, one view"
+    },
+    "step2": {
+      "title": "Select GitHub Repo",
+      "description": "Choose the repo you want to manage with Super Crew",
+      "selectPlaceholder": "Select a repo…",
+      "searchPlaceholder": "Search repos…",
+      "loading": "Loading…",
+      "noResults": "No repos found",
+      "private": "private"
+    },
+    "step3": {
+      "binding": "Binding repo…",
+      "success": "Repo bound successfully, entering board…",
+      "retry": "Retry",
+      "noRepo": "Please go back and select a repo first",
+      "bindFailed": "Binding failed",
+      "unknownError": "Unknown error"
+    },
+    "nav": {
+      "back": "Back",
+      "next": "Next"
+    }
+  },
+  "feature": {
+    "notFound": "Feature {{id}} not found",
+    "loading": "Loading…",
+    "tabs": {
+      "overview": "Overview",
+      "design": "Design",
+      "plan": "Plan"
+    },
+    "props": {
+      "status": "Status",
+      "priority": "Priority",
+      "owner": "Owner",
+      "teams": "Teams",
+      "tags": "Tags",
+      "targetRelease": "Target Release",
+      "created": "Created",
+      "updated": "Updated",
+      "blockedBy": "Blocked by"
+    },
+    "design": {
+      "status": "Design Status",
+      "reviewers": "Reviewers",
+      "approvedBy": "Approved by",
+      "noDesign": "No design document yet"
+    },
+    "plan": {
+      "progress": "Progress",
+      "tasks": "Tasks",
+      "noPlan": "No implementation plan yet"
+    }
+  },
+  "empty": {
+    "title": "No features yet",
+    "description": "Install the SuperCrew plugin in your repo and use /new-feature to create your first feature."
+  }
+}

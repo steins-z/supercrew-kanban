@@ -1,6 +1,3 @@
-# Reference repos
-.ref
-
 # Dependencies
 node_modules/
 .bun/
@@ -21,11 +18,3 @@ dist/
 
 # User data (never commit)
 data/users.json
-
-# Lock files (regenerate on install)
-package-lock.json
-bun.lock
-pnpm-lock.yaml
-
-# vercel
-.vercel
