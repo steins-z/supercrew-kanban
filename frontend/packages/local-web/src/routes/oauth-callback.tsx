@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { setToken, setUserInfo } from '@vibe/app-core'
 import DotGrid from '@web/components/DotGrid'
@@ -9,7 +9,6 @@ export const Route = createFileRoute('/oauth-callback')({
 })
 
 function AuthCallback() {
-  const navigate = useNavigate()
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -24,9 +23,11 @@ function AuthCallback() {
         name: params.get('name') ?? '',
         avatar_url: params.get('avatar_url') ?? '',
       })
-      navigate({ to: '/' })
+      // Use window.location for redirect to avoid TanStack Router hydration race
+      // This ensures the redirect works on cold page loads in production
+      window.location.href = '/'
     } else {
-      navigate({ to: '/login', search: { error: error ?? 'unknown' } as any })
+      window.location.href = `/login?error=${encodeURIComponent(error ?? 'unknown')}`
     }
   }, [])
 
