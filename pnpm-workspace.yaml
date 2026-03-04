@@ -1,0 +1,7 @@
+packages:
+  - backend
+  - frontend/packages/app-core
+  - frontend/packages/local-web
+
+onlyBuiltDependencies:
+  - esbuild
