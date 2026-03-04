@@ -1,0 +1,15 @@
+id: kanban-supercrew-migration
+title: "Kanban SuperCrew Migration (Phase 2 & 3)"
+status: active
+owner: "He Zhang"
+priority: P1
+teams: []
+tags:
+  - backend
+  - frontend
+  - schema
+  - read-only
+created: "2026-03-04"
+updated: "2026-03-04"
+# target_release: ""
+# blocked_by: []
