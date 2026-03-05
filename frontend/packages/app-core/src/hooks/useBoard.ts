@@ -7,7 +7,7 @@ import type { FeatureBoard } from '../types.js'
 const EMPTY_BOARD: FeatureBoard = {
   features: [],
   featuresByStatus: {
-    planning: [], designing: [], ready: [], active: [], blocked: [], done: [],
+    todo: [], doing: [], 'ready-to-ship': [], shipped: [],
   },
 }
 

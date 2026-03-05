@@ -187,22 +187,34 @@ html, body, #root {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.rb-dot-backlog  { background: var(--rb-s-backlog); }
-.rb-dot-todo     { background: var(--rb-s-todo);     box-shadow: 0 0 5px var(--rb-s-todo); }
+.rb-dot-backlog        { background: var(--rb-s-backlog); }
+.rb-dot-todo           { background: var(--rb-s-todo);     box-shadow: 0 0 5px var(--rb-s-todo); }
+.rb-dot-doing          { background: var(--rb-s-progress); box-shadow: 0 0 5px var(--rb-s-progress); }
+.rb-dot-ready-to-ship  { background: var(--rb-s-review);   box-shadow: 0 0 5px var(--rb-s-review); }
+.rb-dot-shipped        { background: var(--rb-s-done);     box-shadow: 0 0 5px var(--rb-s-done); }
+/* legacy aliases */
 .rb-dot-progress { background: var(--rb-s-progress); box-shadow: 0 0 5px var(--rb-s-progress); }
 .rb-dot-review   { background: var(--rb-s-review);   box-shadow: 0 0 5px var(--rb-s-review); }
 .rb-dot-done     { background: var(--rb-s-done);     box-shadow: 0 0 5px var(--rb-s-done); }
 
 /* ─── Status — column top borders ───────────────────────────────────────────── */
-.rb-col-backlog  { border-top: 2px solid var(--rb-s-backlog) !important; }
-.rb-col-todo     { border-top: 2px solid var(--rb-s-todo) !important; }
+.rb-col-backlog        { border-top: 2px solid var(--rb-s-backlog) !important; }
+.rb-col-todo           { border-top: 2px solid var(--rb-s-todo) !important; }
+.rb-col-doing          { border-top: 2px solid var(--rb-s-progress) !important; }
+.rb-col-ready-to-ship  { border-top: 2px solid var(--rb-s-review) !important; }
+.rb-col-shipped        { border-top: 2px solid var(--rb-s-done) !important; }
+/* legacy aliases */
 .rb-col-progress { border-top: 2px solid var(--rb-s-progress) !important; }
 .rb-col-review   { border-top: 2px solid var(--rb-s-review) !important; }
 .rb-col-done     { border-top: 2px solid var(--rb-s-done) !important; }
 
 /* ─── Status — card left borders ────────────────────────────────────────────── */
-.rb-bar-backlog  { border-left: 3px solid var(--rb-s-backlog) !important; border-radius: 0 10px 10px 0 !important; }
-.rb-bar-todo     { border-left: 3px solid var(--rb-s-todo) !important;     border-radius: 0 10px 10px 0 !important; }
+.rb-bar-backlog        { border-left: 3px solid var(--rb-s-backlog) !important;   border-radius: 0 10px 10px 0 !important; }
+.rb-bar-todo           { border-left: 3px solid var(--rb-s-todo) !important;       border-radius: 0 10px 10px 0 !important; }
+.rb-bar-doing          { border-left: 3px solid var(--rb-s-progress) !important;   border-radius: 0 10px 10px 0 !important; }
+.rb-bar-ready-to-ship  { border-left: 3px solid var(--rb-s-review) !important;     border-radius: 0 10px 10px 0 !important; }
+.rb-bar-shipped        { border-left: 3px solid var(--rb-s-done) !important;       border-radius: 0 10px 10px 0 !important; }
+/* legacy aliases */
 .rb-bar-progress { border-left: 3px solid var(--rb-s-progress) !important; border-radius: 0 10px 10px 0 !important; }
 .rb-bar-review   { border-left: 3px solid var(--rb-s-review) !important;   border-radius: 0 10px 10px 0 !important; }
 .rb-bar-done     { border-left: 3px solid var(--rb-s-done) !important;     border-radius: 0 10px 10px 0 !important; }
