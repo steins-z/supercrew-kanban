@@ -242,7 +242,7 @@ async function fetchFeatureMeta(id: string): Promise<FeatureMeta | null> {
   return {
     id: raw.id ?? id,
     title: raw.title ?? "",
-    status: raw.status ?? "planning",
+    status: raw.status ?? "todo",
     owner: raw.owner ?? "",
     priority: raw.priority ?? "P2",
     teams: raw.teams ?? [],
@@ -311,12 +311,10 @@ export async function fetchFeaturePlan(id: string): Promise<PlanDoc | null> {
 export async function fetchBoard(): Promise<FeatureBoard> {
   const features = await fetchFeatures();
   const featuresByStatus: Record<SupercrewStatus, FeatureMeta[]> = {
-    planning: [],
-    designing: [],
-    ready: [],
-    active: [],
-    blocked: [],
-    done: [],
+    todo: [],
+    doing: [],
+    "ready-to-ship": [],
+    shipped: [],
   };
 
   for (const f of features) {

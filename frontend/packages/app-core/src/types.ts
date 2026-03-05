@@ -1,12 +1,6 @@
 // Mirror of backend types — keep in sync with kanban/backend/src/types/index.ts
 
-export type SupercrewStatus =
-  | "planning"
-  | "designing"
-  | "ready"
-  | "active"
-  | "blocked"
-  | "done";
+export type SupercrewStatus = "todo" | "doing" | "ready-to-ship" | "shipped";
 export type FeaturePriority = "P0" | "P1" | "P2" | "P3";
 export type DesignStatus = "draft" | "in-review" | "approved" | "rejected";
 
