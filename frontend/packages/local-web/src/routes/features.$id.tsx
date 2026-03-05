@@ -13,12 +13,10 @@ export const Route = createFileRoute('/features/$id')({
 /* ─── Status helpers ────────────────────────────────────────────────────────── */
 
 const STATUS_COLOR: Record<SupercrewStatus, string> = {
-  planning: '#a78bfa',
-  designing: '#60a5fa',
-  ready: '#34d399',
-  active: '#fbbf24',
-  blocked: '#f87171',
-  done: '#6ee7b7',
+  todo:            '#3b82f6',
+  doing:           '#f59e0b',
+  'ready-to-ship': '#8b5cf6',
+  shipped:         '#10b981',
 }
 
 const DESIGN_STATUS_COLOR: Record<DesignStatus, string> = {
