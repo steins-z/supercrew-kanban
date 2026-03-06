@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { boardRouter } from './routes/board.js'
 
 // Environment variables
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID ?? ''
@@ -13,7 +14,7 @@ export const app = new Hono()
 app.use('*', cors({
   origin: [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'],
   allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Repo-Owner', 'X-Repo-Name'],
 }))
 
 // Redirect to GitHub OAuth
@@ -71,6 +72,9 @@ app.get('/auth/callback', async (c) => {
 })
 
 app.get('/health', (c) => c.json({ ok: true }))
+
+// ─── API Routes ───────────────────────────────────────────────────────────
+app.route('/api/board', boardRouter)
 
 // Bun serves when it sees default export with { port, fetch }
 export default {

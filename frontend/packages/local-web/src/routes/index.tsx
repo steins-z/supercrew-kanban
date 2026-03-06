@@ -167,9 +167,42 @@ function FeatureCard({ feature, statusKey, isDark }: { feature: FeatureMeta; sta
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         marginBottom: 5,
       }}>
-        <span className="rb-mono" style={{ color: 'hsl(var(--text-low))', fontSize: 9.5 }}>
-          {feature.id}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span className="rb-mono" style={{ color: 'hsl(var(--text-low))', fontSize: 9.5 }}>
+            {feature.id}
+          </span>
+          {feature.primaryBranch && feature.branches && feature.branches.length > 0 && (
+            <span
+              className="rb-mono rb-branch-tag"
+              style={{
+                fontSize: 8.5,
+                padding: '1px 5px',
+                background: 'hsl(var(--_accent-dim))',
+                border: '1px solid hsl(var(--_accent))',
+                color: 'hsl(var(--text-high))',
+              }}
+              title={`Primary branch: ${feature.primaryBranch}`}
+            >
+              {feature.primaryBranch}
+            </span>
+          )}
+          {feature.branches && feature.branches.some(b => b.isDifferent) && (
+            <span
+              style={{
+                fontSize: 8.5,
+                padding: '1px 5px',
+                background: 'hsl(var(--_warning-dim, 40 80% 95%))',
+                border: '1px solid hsl(var(--_warning, 40 80% 60%))',
+                color: 'hsl(var(--_warning, 40 80% 40%))',
+                borderRadius: '4px',
+                fontWeight: 600,
+              }}
+              title="This feature has different versions in other branches"
+            >
+              ⚠ Multiple versions
+            </span>
+          )}
+        </div>
         {feature.priority && (
           <span className={`rb-mono ${PRI_CLASS[feature.priority]}`} style={{ fontSize: 9.5 }}>
             {feature.priority}
@@ -196,6 +229,27 @@ function FeatureCard({ feature, statusKey, isDark }: { feature: FeatureMeta; sta
           ))}
           {(feature.tags ?? []).slice(0, 2).map(tag => (
             <span key={tag} className="rb-tag">{tag}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Branch Tags - only show if there are multiple versions */}
+      {feature.branches && feature.branches.length > 0 && feature.branches.some(b => b.isDifferent) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 7 }}>
+          {feature.branches.map(branch => (
+            <span
+              key={branch.branch}
+              className="rb-tag rb-branch-tag"
+              title={`Branch: ${branch.branch} (different content)`}
+              style={{
+                fontSize: 9,
+                opacity: 1,
+                background: 'hsl(var(--_accent-dim))',
+                border: '1px solid hsl(var(--_accent))',
+              }}
+            >
+              {branch.branch}
+            </span>
           ))}
         </div>
       )}

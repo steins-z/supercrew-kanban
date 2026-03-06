@@ -16,6 +16,15 @@ export interface FeatureMeta {
   updated: string
   tags?: string[]
   blocked_by?: string[]
+  // Multi-branch extensions (optional for backward compatibility)
+  branches?: BranchInfo[]
+  primaryBranch?: string
+}
+
+export interface BranchInfo {
+  branch: string
+  filesHash: string
+  isDifferent: boolean
 }
 
 export interface DesignDoc {

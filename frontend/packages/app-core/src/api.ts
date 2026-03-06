@@ -287,10 +287,43 @@ export async function fetchBoard(): Promise<FeatureBoard> {
   }
 
   for (const f of features) {
-    if (featuresByStatus[f.status]) {
-      featuresByStatus[f.status].push(f)
-    }
+    // Map unknown statuses to 'shipped' as fallback
+    const status = featuresByStatus[f.status] !== undefined ? f.status : 'shipped'
+    featuresByStatus[status].push(f)
   }
 
   return { features, featuresByStatus }
+}
+
+// ─── Multi-Branch Board ────────────────────────────────────────────────────
+
+export async function fetchBoardMultiBranch(): Promise<FeatureBoard> {
+  const repo = getSelectedRepo()
+  if (!repo) {
+    return {
+      features: [],
+      featuresByStatus: {
+        todo: [], doing: [], 'ready-to-ship': [], shipped: [],
+      },
+    }
+  }
+
+  const token = getAccessToken()
+  if (!token) throw new Error('Not authenticated')
+
+  // Call backend API
+  const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3001'
+  const res = await fetch(`${backendUrl}/api/board/multi-branch`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'X-Repo-Owner': repo.owner,
+      'X-Repo-Name': repo.repo,
+    },
+  })
+
+  if (!res.ok) {
+    throw new Error(`Backend API error: ${res.status} ${res.statusText}`)
+  }
+
+  return res.json()
 }

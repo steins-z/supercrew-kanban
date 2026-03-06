@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout -- frontend/packages/local-web/src/routeTree.gen.ts)",
+      "Bash(git rebase origin/main)",
+      "Bash(git reset --hard HEAD)",
+      "Bash(git config core.autocrlf)",
+      "Bash(git -c core.autocrlf=false rebase origin/main)",
+      "Bash(git merge origin/main)",
+      "Bash(git merge --abort)",
+      "Bash(git merge origin/main --no-commit)",
+      "Bash(git checkout --theirs frontend/packages/app-core/src/types.ts frontend/packages/app-core/src/api.ts)",
+      "Bash(git add frontend/packages/app-core/src/types.ts frontend/packages/app-core/src/api.ts)",
+      "Bash(git add -A)",
+      "Bash(git commit -m \"Merge branch ''main'' into feature/multi-branch-kanban:*)"
+    ]
+  }
+}
