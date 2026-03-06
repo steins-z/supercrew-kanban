@@ -217,34 +217,24 @@ function FeatureCard({ feature, statusKey, isDark }: { feature: FeatureMeta; sta
         </div>
       )}
 
-      {/* Branch Tags */}
-      {feature.branches && feature.branches.length > 0 && (
+      {/* Branch Tags - only show if there are multiple versions */}
+      {feature.branches && feature.branches.length > 0 && feature.branches.some(b => b.isDifferent) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 7 }}>
-          {feature.branches
-            .filter(branch => {
-              // If content is same across all branches (isDifferent=false),
-              // only show main branch tag to reduce noise
-              if (!branch.isDifferent) {
-                return branch.branch === 'main'
-              }
-              // If content differs, show all branches
-              return true
-            })
-            .map(branch => (
-              <span
-                key={branch.branch}
-                className="rb-tag rb-branch-tag"
-                title={`Branch: ${branch.branch}${branch.isDifferent ? ' (different content)' : ' (same content)'}`}
-                style={{
-                  fontSize: 9,
-                  opacity: branch.isDifferent ? 1 : 0.6,
-                  background: branch.isDifferent ? 'hsl(var(--_accent-dim))' : 'hsl(var(--_bg-tertiary-default))',
-                  border: branch.isDifferent ? '1px solid hsl(var(--_accent))' : '1px solid hsl(var(--_border))',
-                }}
-              >
-                {branch.branch}
-              </span>
-            ))}
+          {feature.branches.map(branch => (
+            <span
+              key={branch.branch}
+              className="rb-tag rb-branch-tag"
+              title={`Branch: ${branch.branch} (different content)`}
+              style={{
+                fontSize: 9,
+                opacity: 1,
+                background: 'hsl(var(--_accent-dim))',
+                border: '1px solid hsl(var(--_accent))',
+              }}
+            >
+              {branch.branch}
+            </span>
+          ))}
         </div>
       )}
 
