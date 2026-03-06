@@ -167,9 +167,26 @@ function FeatureCard({ feature, statusKey, isDark }: { feature: FeatureMeta; sta
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         marginBottom: 5,
       }}>
-        <span className="rb-mono" style={{ color: 'hsl(var(--text-low))', fontSize: 9.5 }}>
-          {feature.id}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span className="rb-mono" style={{ color: 'hsl(var(--text-low))', fontSize: 9.5 }}>
+            {feature.id}
+          </span>
+          {feature.primaryBranch && feature.branches && feature.branches.length > 0 && (
+            <span
+              className="rb-mono rb-branch-tag"
+              style={{
+                fontSize: 8.5,
+                padding: '1px 5px',
+                background: 'hsl(var(--_accent-dim))',
+                border: '1px solid hsl(var(--_accent))',
+                color: 'hsl(var(--text-high))',
+              }}
+              title={`Primary branch: ${feature.primaryBranch}`}
+            >
+              {feature.primaryBranch}
+            </span>
+          )}
+        </div>
         {feature.priority && (
           <span className={`rb-mono ${PRI_CLASS[feature.priority]}`} style={{ fontSize: 9.5 }}>
             {feature.priority}
