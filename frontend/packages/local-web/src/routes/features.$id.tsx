@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeftIcon } from '@phosphor-icons/react'
-import { fetchFeature, fetchFeatureDesign, fetchFeaturePlan } from '@app/api'
+import Markdown from 'react-markdown'
+import { fetchFeature, fetchFeatureDesign, fetchFeaturePlan, fetchFeaturePrd } from '@app/api'
 import type { Feature, SupercrewStatus, DesignStatus } from '@app/types'
 
 export const Route = createFileRoute('/features/$id')({
@@ -39,11 +40,17 @@ function FeatureDetailPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const [tab, setTab] = useState<'overview' | 'design' | 'plan'>('overview')
+  const [tab, setTab] = useState<'overview' | 'prd' | 'design' | 'plan'>('overview')
 
   const { data: feature, isLoading, error } = useQuery({
     queryKey: ['feature', id],
     queryFn: () => fetchFeature(id),
+  })
+
+  const { data: prdDoc } = useQuery({
+    queryKey: ['feature-prd', id],
+    queryFn: () => fetchFeaturePrd(id),
+    enabled: tab === 'prd',
   })
 
   const { data: designDoc } = useQuery({
@@ -124,7 +131,7 @@ function FeatureDetailPage() {
           background: 'rgba(30,41,59,0.4)',
         }}
       >
-        {(['overview', 'design', 'plan'] as const).map((t2) => (
+        {(['overview', 'prd', 'design', 'plan'] as const).map((t2) => (
           <button
             key={t2}
             onClick={() => setTab(t2)}
@@ -148,6 +155,7 @@ function FeatureDetailPage() {
       {/* Tab content */}
       <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
         {tab === 'overview' && <OverviewTab feature={feature} />}
+        {tab === 'prd' && <MarkdownBody md={prdDoc?.body} />}
         {tab === 'design' && <MarkdownBody md={designDoc?.body} />}
         {tab === 'plan' && <MarkdownBody md={planDoc?.body} />}
       </div>
@@ -322,15 +330,33 @@ function MarkdownBody({ md }: { md?: string }) {
   }
   return (
     <div
+      className="markdown-body"
       style={{
         color: '#cbd5e1',
         lineHeight: 1.8,
         fontSize: 14,
-        whiteSpace: 'pre-wrap',
         maxWidth: 720,
       }}
     >
-      {md}
+      <style>{`
+        .markdown-body h1 { font-size: 1.5em; font-weight: 600; margin: 1em 0 0.5em; color: #e2e8f0; }
+        .markdown-body h2 { font-size: 1.25em; font-weight: 600; margin: 1em 0 0.5em; color: #e2e8f0; }
+        .markdown-body h3 { font-size: 1.1em; font-weight: 600; margin: 1em 0 0.5em; color: #e2e8f0; }
+        .markdown-body p { margin: 0.5em 0; }
+        .markdown-body ul, .markdown-body ol { margin: 0.5em 0; padding-left: 1.5em; }
+        .markdown-body li { margin: 0.25em 0; }
+        .markdown-body code { background: rgba(255,255,255,0.1); padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em; }
+        .markdown-body pre { background: rgba(0,0,0,0.3); padding: 1em; border-radius: 6px; overflow-x: auto; }
+        .markdown-body pre code { background: none; padding: 0; }
+        .markdown-body blockquote { border-left: 3px solid #475569; margin: 0.5em 0; padding-left: 1em; color: #94a3b8; }
+        .markdown-body a { color: #60a5fa; text-decoration: none; }
+        .markdown-body a:hover { text-decoration: underline; }
+        .markdown-body hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1em 0; }
+        .markdown-body table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
+        .markdown-body th, .markdown-body td { border: 1px solid rgba(255,255,255,0.1); padding: 0.5em; text-align: left; }
+        .markdown-body th { background: rgba(255,255,255,0.05); }
+      `}</style>
+      <Markdown>{md}</Markdown>
     </div>
   )
 }

@@ -98,8 +98,8 @@ export class BranchScanner {
       // Parallel fetch all three files
       const [meta, design, plan] = await Promise.all([
         this.gh.getFileContent(featureId, 'meta.yaml', branch),
-        this.gh.getFileContent(featureId, 'design.md', branch),
-        this.gh.getFileContent(featureId, 'plan.md', branch),
+        this.gh.getFileContent(featureId, 'dev-design.md', branch),
+        this.gh.getFileContent(featureId, 'dev-plan.md', branch),
       ])
 
       return {
