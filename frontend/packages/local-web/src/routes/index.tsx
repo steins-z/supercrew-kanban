@@ -186,6 +186,22 @@ function FeatureCard({ feature, statusKey, isDark }: { feature: FeatureMeta; sta
               {feature.primaryBranch}
             </span>
           )}
+          {feature.branches && feature.branches.some(b => b.isDifferent) && (
+            <span
+              style={{
+                fontSize: 8.5,
+                padding: '1px 5px',
+                background: 'hsl(var(--_warning-dim, 40 80% 95%))',
+                border: '1px solid hsl(var(--_warning, 40 80% 60%))',
+                color: 'hsl(var(--_warning, 40 80% 40%))',
+                borderRadius: '4px',
+                fontWeight: 600,
+              }}
+              title="This feature has different versions in other branches"
+            >
+              ⚠ Multiple versions
+            </span>
+          )}
         </div>
         {feature.priority && (
           <span className={`rb-mono ${PRI_CLASS[feature.priority]}`} style={{ fontSize: 9.5 }}>
