@@ -56,16 +56,16 @@ boardRouter.get('/multi-branch', async (c) => {
 
     // Step 4: Group by status
     const featuresByStatus: Record<SupercrewStatus, typeof features> = {
-      planning: [],
-      designing: [],
-      ready: [],
-      active: [],
-      blocked: [],
-      done: [],
+      todo: [],
+      doing: [],
+      'ready-to-ship': [],
+      shipped: [],
     }
 
     for (const feature of features) {
-      featuresByStatus[feature.status].push(feature)
+      // Map unknown statuses to fallback value
+      const status = featuresByStatus[feature.status] !== undefined ? feature.status : 'shipped'
+      featuresByStatus[status].push(feature)
     }
 
     // ─── Return Response ──────────────────────────────────────────────
