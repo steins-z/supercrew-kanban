@@ -259,6 +259,19 @@ export async function fetchFeatureDesign(id: string): Promise<DesignDoc | null> 
   }
 }
 
+export async function fetchFeaturePrd(id: string): Promise<{ body: string } | null> {
+  const repo = getSelectedRepo()
+  if (!repo) return null
+
+  const file = await ghFetch<{ content: string }>(
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/prd.md`
+  )
+  if (!file) return null
+
+  const { body } = parseFrontmatter(decodeContent(file.content))
+  return { body }
+}
+
 export async function fetchFeaturePlan(id: string): Promise<PlanDoc | null> {
   const repo = getSelectedRepo()
   if (!repo) return null
