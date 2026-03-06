@@ -40,3 +40,34 @@
 - Progress: 14/22 tasks complete (64%)
 - Next: Complete Phase 4 & 5 (testing, deployment, caching)
 
+## 2026-03-06 — Core Feature Complete: Aggregation & UI Polish
+
+### Completed
+- ✅ Implemented feature aggregation logic (one card per feature)
+- ✅ Built smart branch filtering to remove redundant merge copies
+- ✅ Added primary branch badge to card header
+- ✅ Added "⚠️ Multiple versions" warning indicator
+- ✅ Refined branch tags display (only show when isDifferent=true)
+- ✅ Fixed schema mismatch between backend and frontend
+- ✅ Tested with real multi-branch scenarios
+
+### Key Design Decisions
+- **One card per feature**: Aggregate all branches, use most recently updated branch for card status
+- **Intelligent filtering**: If hash group includes main, only keep main (others are merge copies)
+- **Visual clarity**: Primary branch badge + warning + conditional branch tags
+
+### Aggregation Algorithm Summary
+1. Group snapshots by feature ID, then by content hash
+2. Find most recently updated snapshot (determines card status/position)
+3. Filter redundant branches per hash group
+4. Build single card with all relevant branch info
+
+### Issues
+- None
+
+### Next Steps
+- Add backend caching for improved performance
+- Implement comprehensive error handling
+- Write tests for aggregation logic
+- Consider deployment to Vercel
+
