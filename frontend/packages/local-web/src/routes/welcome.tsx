@@ -222,7 +222,7 @@ function StepBind({
     setStatus('loading')
     setErrorMsg('')
     try {
-      // Check if repo has .supercrew/features/
+      // Check if repo has .supercrew/tasks/
       const exists = await checkSupercrewExists(repo.owner.login, repo.name)
       if (!exists) {
         setStatus('error')

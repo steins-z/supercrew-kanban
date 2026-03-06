@@ -3,7 +3,7 @@
 import type { GitHubRef, GitHubContent } from '../types/board.js'
 
 const GITHUB_API_BASE = 'https://api.github.com'
-const FEATURES_PATH = '.supercrew/features'
+const FEATURES_PATH = '.supercrew/tasks'
 
 export class GitHubClient {
   private headers: Record<string, string>

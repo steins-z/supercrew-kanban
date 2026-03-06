@@ -1,4 +1,4 @@
-// GitHub API client for reading .supercrew/features/
+// GitHub API client for reading .supercrew/tasks/
 
 import type { FeatureMeta, FeatureBoard, Feature, DesignDoc, PlanDoc, SupercrewStatus } from './types.js'
 import { getAccessToken, clearToken } from './auth.js'
@@ -126,7 +126,7 @@ function parseYaml(content: string): Record<string, any> {
   return data
 }
 
-const FEATURES_PATH = '.supercrew/features'
+const FEATURES_PATH = '.supercrew/tasks'
 
 // ─── Repo Selection ─────────────────────────────────────────────────────────
 
@@ -246,7 +246,7 @@ export async function fetchFeatureDesign(id: string): Promise<DesignDoc | null> 
   if (!repo) return null
 
   const file = await ghFetch<{ content: string }>(
-    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/design.md`
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/dev-design.md`
   )
   if (!file) return null
 
@@ -264,7 +264,7 @@ export async function fetchFeaturePlan(id: string): Promise<PlanDoc | null> {
   if (!repo) return null
 
   const file = await ghFetch<{ content: string }>(
-    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/plan.md`
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/dev-plan.md`
   )
   if (!file) return null
 
