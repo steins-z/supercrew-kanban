@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { fetchBoard } from '../api.js'
+import { fetchBoardMultiBranch } from '../api.js'
 import { useRepo } from './useRepo.js'
 import type { FeatureBoard } from '../types.js'
 
@@ -16,11 +16,11 @@ export function useBoard() {
   const { repo } = useRepo()
 
   // Include repo in query key so it refetches when repo changes
-  const queryKey = ['board', repo?.full_name ?? null] as const
+  const queryKey = ['board-multi', repo?.full_name ?? null] as const
 
   const { data, isLoading, error } = useQuery({
     queryKey,
-    queryFn: fetchBoard,
+    queryFn: fetchBoardMultiBranch,
     staleTime: 30_000,
     enabled: !!repo,  // Don't fetch if no repo selected
   })
