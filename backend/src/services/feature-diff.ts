@@ -36,8 +36,37 @@ export class FeatureDiff {
       const hasMultipleVersions = hashMap.size > 1
 
       for (const [hash, branches] of hashMap) {
-        // Determine primary branch (main first, else first branch)
-        const primaryBranch = branches.includes('main') ? 'main' : branches[0]
+        // ─── Filter redundant branches ────────────────────────────────
+        let filteredBranches = branches
+
+        if (branches.includes('main')) {
+          // If main is present, only keep main (others are likely merged copies)
+          filteredBranches = ['main']
+        } else if (branches.length > 1) {
+          // If no main and multiple branches, keep only the most recently updated one
+          // Find the most recent by parsing updated date from meta.yaml
+          const branchSnapshots = branches.map(b =>
+            this.snapshots.find(s => s.featureId === featureId && s.branch === b)
+          ).filter(s => s && s.files.meta)
+
+          // Parse updated dates and find the latest
+          const branchDates = branchSnapshots.map(snapshot => {
+            const meta = this.parseMetaYaml(snapshot!.files.meta!)
+            return {
+              branch: snapshot!.branch,
+              updated: meta.updated || '1970-01-01'
+            }
+          })
+
+          // Sort by updated date descending and take the first
+          branchDates.sort((a, b) => b.updated.localeCompare(a.updated))
+          filteredBranches = [branchDates[0].branch]
+        }
+
+        // ─── Build card for this hash group ──────────────────────────
+
+        // Determine primary branch (main first, else first filtered branch)
+        const primaryBranch = filteredBranches.includes('main') ? 'main' : filteredBranches[0]
 
         // Find the snapshot for primary branch
         const snapshot = this.snapshots.find(
@@ -51,7 +80,7 @@ export class FeatureDiff {
 
         // Build branch info
         // isDifferent = true if this feature has multiple versions across branches
-        const branchInfo: BranchInfo[] = branches.map(b => ({
+        const branchInfo: BranchInfo[] = filteredBranches.map(b => ({
           branch: b,
           filesHash: hash,
           isDifferent: hasMultipleVersions,
