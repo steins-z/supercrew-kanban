@@ -200,6 +200,27 @@ function FeatureCard({ feature, statusKey, isDark }: { feature: FeatureMeta; sta
         </div>
       )}
 
+      {/* Branch Tags */}
+      {feature.branches && feature.branches.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 7 }}>
+          {feature.branches.map(branch => (
+            <span
+              key={branch.branch}
+              className="rb-tag rb-branch-tag"
+              title={`Branch: ${branch.branch}${branch.isDifferent ? ' (different content)' : ' (same content)'}`}
+              style={{
+                fontSize: 9,
+                opacity: branch.isDifferent ? 1 : 0.6,
+                background: branch.isDifferent ? 'hsl(var(--_accent-dim))' : 'hsl(var(--_bg-tertiary-default))',
+                border: branch.isDifferent ? '1px solid hsl(var(--_accent))' : '1px solid hsl(var(--_border))',
+              }}
+            >
+              {branch.branch.replace('feature/', '').replace('main', '●')}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Owner */}
       {feature.owner && (
         <div style={{
