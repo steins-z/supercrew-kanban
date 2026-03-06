@@ -220,21 +220,31 @@ function FeatureCard({ feature, statusKey, isDark }: { feature: FeatureMeta; sta
       {/* Branch Tags */}
       {feature.branches && feature.branches.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 7 }}>
-          {feature.branches.map(branch => (
-            <span
-              key={branch.branch}
-              className="rb-tag rb-branch-tag"
-              title={`Branch: ${branch.branch}${branch.isDifferent ? ' (different content)' : ' (same content)'}`}
-              style={{
-                fontSize: 9,
-                opacity: branch.isDifferent ? 1 : 0.6,
-                background: branch.isDifferent ? 'hsl(var(--_accent-dim))' : 'hsl(var(--_bg-tertiary-default))',
-                border: branch.isDifferent ? '1px solid hsl(var(--_accent))' : '1px solid hsl(var(--_border))',
-              }}
-            >
-              {branch.branch}
-            </span>
-          ))}
+          {feature.branches
+            .filter(branch => {
+              // If content is same across all branches (isDifferent=false),
+              // only show main branch tag to reduce noise
+              if (!branch.isDifferent) {
+                return branch.branch === 'main'
+              }
+              // If content differs, show all branches
+              return true
+            })
+            .map(branch => (
+              <span
+                key={branch.branch}
+                className="rb-tag rb-branch-tag"
+                title={`Branch: ${branch.branch}${branch.isDifferent ? ' (different content)' : ' (same content)'}`}
+                style={{
+                  fontSize: 9,
+                  opacity: branch.isDifferent ? 1 : 0.6,
+                  background: branch.isDifferent ? 'hsl(var(--_accent-dim))' : 'hsl(var(--_bg-tertiary-default))',
+                  border: branch.isDifferent ? '1px solid hsl(var(--_accent))' : '1px solid hsl(var(--_border))',
+                }}
+              >
+                {branch.branch}
+              </span>
+            ))}
         </div>
       )}
 
