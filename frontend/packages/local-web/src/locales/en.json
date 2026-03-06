@@ -12,12 +12,10 @@
   "board": {
     "loading": "Loading…",
     "columns": {
-      "planning": "Planning",
-      "designing": "Designing",
-      "ready": "Ready",
-      "active": "Active",
-      "blocked": "Blocked",
-      "done": "Done"
+      "todo": "Todo",
+      "doing": "Doing",
+      "readyToShip": "Ready to Ship",
+      "shipped": "Shipped"
     }
   },
   "login": {

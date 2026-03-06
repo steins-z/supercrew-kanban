@@ -10,16 +10,14 @@ import AnimatedCard from '@web/components/AnimatedCard'
 // ─── Column config ──────────────────────────────────────────────────────────
 
 const STATUS_COLUMN_IDS: SupercrewStatus[] = [
-  'planning', 'designing', 'ready', 'active', 'blocked', 'done',
+  'todo', 'doing', 'ready-to-ship', 'shipped',
 ]
 
 const STATUS_KEY_MAP: Record<SupercrewStatus, string> = {
-  'planning':  'board.columns.planning',
-  'designing': 'board.columns.designing',
-  'ready':     'board.columns.ready',
-  'active':    'board.columns.active',
-  'blocked':   'board.columns.blocked',
-  'done':      'board.columns.done',
+  'todo':          'board.columns.todo',
+  'doing':         'board.columns.doing',
+  'ready-to-ship': 'board.columns.readyToShip',
+  'shipped':       'board.columns.shipped',
 }
 
 function getStatusKey(status: SupercrewStatus): string {

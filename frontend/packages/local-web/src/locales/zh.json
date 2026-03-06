@@ -12,12 +12,10 @@
   "board": {
     "loading": "加载中…",
     "columns": {
-      "planning": "规划中",
-      "designing": "设计中",
-      "ready": "就绪",
-      "active": "进行中",
-      "blocked": "阻塞",
-      "done": "已完成"
+      "todo": "待处理",
+      "doing": "进行中",
+      "readyToShip": "待发布",
+      "shipped": "已发布"
     }
   },
   "login": {
