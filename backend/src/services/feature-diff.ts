@@ -33,10 +33,32 @@ export class FeatureDiff {
     const cards: FeatureMetaWithBranches[] = []
 
     for (const [featureId, hashMap] of grouped) {
-      const hasMultipleVersions = hashMap.size > 1
+      // ─── Aggregate: One card per feature ──────────────────────────────
+      // Collect all snapshots for this feature across all versions
+      const allSnapshots = Array.from(hashMap.values())
+        .flat()
+        .map(branch => this.snapshots.find(s => s.featureId === featureId && s.branch === branch))
+        .filter(s => s && s.files.meta) as FileSnapshot[]
+
+      if (allSnapshots.length === 0) continue
+
+      // Parse metadata from all snapshots
+      const snapshotsWithMeta = allSnapshots.map(snapshot => ({
+        snapshot,
+        meta: this.parseMetaYaml(snapshot.files.meta!),
+      }))
+
+      // Find the most recently updated snapshot (this determines card status/position)
+      snapshotsWithMeta.sort((a, b) =>
+        (b.meta.updated || '1970-01-01').localeCompare(a.meta.updated || '1970-01-01')
+      )
+      const primarySnapshot = snapshotsWithMeta[0]
+
+      // ─── Filter redundant branches ────────────────────────────────────
+      // For each hash group, filter out redundant branches
+      const allBranchInfo: BranchInfo[] = []
 
       for (const [hash, branches] of hashMap) {
-        // ─── Filter redundant branches ────────────────────────────────
         let filteredBranches = branches
 
         if (branches.includes('main')) {
@@ -44,55 +66,38 @@ export class FeatureDiff {
           filteredBranches = ['main']
         } else if (branches.length > 1) {
           // If no main and multiple branches, keep only the most recently updated one
-          // Find the most recent by parsing updated date from meta.yaml
-          const branchSnapshots = branches.map(b =>
-            this.snapshots.find(s => s.featureId === featureId && s.branch === b)
-          ).filter(s => s && s.files.meta)
+          const branchSnapshots = branches
+            .map(b => this.snapshots.find(s => s.featureId === featureId && s.branch === b))
+            .filter(s => s && s.files.meta) as FileSnapshot[]
 
-          // Parse updated dates and find the latest
-          const branchDates = branchSnapshots.map(snapshot => {
-            const meta = this.parseMetaYaml(snapshot!.files.meta!)
-            return {
-              branch: snapshot!.branch,
-              updated: meta.updated || '1970-01-01'
-            }
-          })
+          const branchDates = branchSnapshots.map(snapshot => ({
+            branch: snapshot.branch,
+            updated: this.parseMetaYaml(snapshot.files.meta!).updated || '1970-01-01',
+          }))
 
-          // Sort by updated date descending and take the first
           branchDates.sort((a, b) => b.updated.localeCompare(a.updated))
           filteredBranches = [branchDates[0].branch]
         }
 
-        // ─── Build card for this hash group ──────────────────────────
-
-        // Determine primary branch (main first, else first filtered branch)
-        const primaryBranch = filteredBranches.includes('main') ? 'main' : filteredBranches[0]
-
-        // Find the snapshot for primary branch
-        const snapshot = this.snapshots.find(
-          s => s.featureId === featureId && s.branch === primaryBranch
-        )
-
-        if (!snapshot || !snapshot.files.meta) continue
-
-        // Parse meta.yaml from primary branch
-        const meta = this.parseMetaYaml(snapshot.files.meta)
-
-        // Build branch info
-        // isDifferent = true if this feature has multiple versions across branches
-        const branchInfo: BranchInfo[] = filteredBranches.map(b => ({
-          branch: b,
-          filesHash: hash,
-          isDifferent: hasMultipleVersions,
-        }))
-
-        cards.push({
-          ...meta,
-          id: featureId,
-          branches: branchInfo,
-          primaryBranch,
-        })
+        // Add branch info for filtered branches
+        for (const branch of filteredBranches) {
+          allBranchInfo.push({
+            branch,
+            filesHash: hash,
+            isDifferent: hashMap.size > 1, // Multiple versions exist
+          })
+        }
       }
+
+      // ─── Build single card for this feature ───────────────────────────
+      const primaryBranch = primarySnapshot.snapshot.branch
+
+      cards.push({
+        ...primarySnapshot.meta,
+        id: featureId,
+        branches: allBranchInfo,
+        primaryBranch,
+      })
     }
 
     return cards
