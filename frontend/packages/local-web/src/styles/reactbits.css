@@ -257,6 +257,13 @@ html, body, #root {
   white-space: nowrap;
 }
 
+.rb-branch-tag {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+
 /* ─── Buttons ────────────────────────────────────────────────────────────────── */
 .rb-btn-primary {
   display: inline-flex; align-items: center; gap: 5px;
