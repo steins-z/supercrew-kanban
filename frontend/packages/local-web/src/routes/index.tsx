@@ -215,7 +215,7 @@ function FeatureCard({ feature, statusKey, isDark }: { feature: FeatureMeta; sta
                 border: branch.isDifferent ? '1px solid hsl(var(--_accent))' : '1px solid hsl(var(--_border))',
               }}
             >
-              {branch.branch.replace('feature/', '').replace('main', '●')}
+              {branch.branch}
             </span>
           ))}
         </div>
