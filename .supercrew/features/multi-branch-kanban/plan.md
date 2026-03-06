@@ -1,48 +1,48 @@
 ---
 total_tasks: 22
-completed_tasks: 0
-progress: 0
+completed_tasks: 9
+progress: 41
 ---
 
 # Multi-Branch Kanban — Implementation Plan
 
 ## Phase 1: Backend Foundation (8 tasks)
 
-- [ ] Task 1.1: Create backend types for multi-branch response
+- [x] Task 1.1: Create backend types for multi-branch response
   - File(s): `backend/src/types/board.ts`
   - Acceptance: TypeScript interfaces defined for `FeatureMetaWithBranches`, `BranchInfo`, `BranchError`, `BoardResponse`
 
-- [ ] Task 1.2: Create GitHub API client wrapper
+- [x] Task 1.2: Create GitHub API client wrapper
   - File(s): `backend/src/services/github.ts`
   - Acceptance: `GitHubClient` class with methods: `getRefs()`, `listFeatureDirs()`, `getFileContent()`, rate limit tracking
 
-- [ ] Task 1.3: Create file snapshot structure
+- [x] Task 1.3: Create file snapshot structure
   - File(s): `backend/src/services/branch-scanner.ts`
   - Acceptance: `FileSnapshot` interface and `BranchScanner` class skeleton
 
-- [ ] Task 1.4: Implement branch discovery
+- [x] Task 1.4: Implement branch discovery
   - File(s): `backend/src/services/branch-scanner.ts`
   - Acceptance: `discoverBranches()` method returns main + feature/* branches
 
-- [ ] Task 1.5: Implement parallel feature fetching
+- [x] Task 1.5: Implement parallel feature fetching
   - File(s): `backend/src/services/branch-scanner.ts`
   - Acceptance: `fetchAllFeatures()` uses Promise.allSettled, returns FileSnapshot[]
 
-- [ ] Task 1.6: Create diff service with hash computation
+- [x] Task 1.6: Create diff service with hash computation
   - File(s): `backend/src/services/feature-diff.ts`
   - Acceptance: `FeatureDiff` class with `computeHash()` using MD5
 
-- [ ] Task 1.7: Implement deduplication algorithm
+- [x] Task 1.7: Implement deduplication algorithm
   - File(s): `backend/src/services/feature-diff.ts`
   - Acceptance: `buildFeatureCards()` groups by hash, returns cards with branch info
 
-- [ ] Task 1.8: Create /api/board/multi-branch endpoint
+- [x] Task 1.8: Create /api/board/multi-branch endpoint
   - File(s): `backend/src/routes/board.ts`
   - Acceptance: GET endpoint accepts headers, calls scanner + diff, returns JSON response
 
 ## Phase 2: Backend Integration (3 tasks)
 
-- [ ] Task 2.1: Mount board router in Hono app
+- [x] Task 2.1: Mount board router in Hono app
   - File(s): `backend/src/index.ts`
   - Acceptance: `app.route('/api/board', boardRouter)` added, imports correct
 
