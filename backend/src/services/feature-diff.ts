@@ -33,6 +33,8 @@ export class FeatureDiff {
     const cards: FeatureMetaWithBranches[] = []
 
     for (const [featureId, hashMap] of grouped) {
+      const hasMultipleVersions = hashMap.size > 1
+
       for (const [hash, branches] of hashMap) {
         // Determine primary branch (main first, else first branch)
         const primaryBranch = branches.includes('main') ? 'main' : branches[0]
@@ -48,10 +50,11 @@ export class FeatureDiff {
         const meta = this.parseMetaYaml(snapshot.files.meta)
 
         // Build branch info
+        // isDifferent = true if this feature has multiple versions across branches
         const branchInfo: BranchInfo[] = branches.map(b => ({
           branch: b,
           filesHash: hash,
-          isDifferent: b !== 'main',
+          isDifferent: hasMultipleVersions,
         }))
 
         cards.push({
