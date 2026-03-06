@@ -1,9 +1,9 @@
 id: dev-branch-file-fetching
 title: "Dev Branch File Fetching"
-status: todo
-owner: "TBD"
+status: doing
+owner: "Luna Chen"
 priority: P0
 teams: []
-tags: []
+tags: [backend, github-api]
 created: "2026-03-04"
-updated: "2026-03-04"
+updated: "2026-03-06"
