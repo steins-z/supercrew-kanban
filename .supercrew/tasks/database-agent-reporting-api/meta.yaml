@@ -1,0 +1,9 @@
+id: database-agent-reporting-api
+title: "Database & Agent Reporting API"
+status: doing
+owner: "qunmi"
+priority: P0
+teams: []
+tags: [database, api, architecture, agent-integration, turso, sqlite]
+created: "2026-03-07"
+updated: "2026-03-07"
