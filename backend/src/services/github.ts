@@ -108,4 +108,113 @@ export class GitHubClient {
     const data: GitHubContent = await res.json()
     return data.content ?? null  // Base64 encoded
   }
+
+  /**
+   * Get file content with ETag support (for validation service)
+   * Returns 304 if content hasn't changed, saving API quota
+   */
+  async getFileContentWithETag(
+    featureId: string,
+    filename: string,
+    branch: string,
+    etag?: string
+  ): Promise<{ content: string | null; etag?: string; notModified: boolean }> {
+    this.checkRateLimit()
+
+    const url = `${GITHUB_API_BASE}/repos/${this.owner}/${this.repo}/contents/${FEATURES_PATH}/${featureId}/${filename}?ref=${branch}`
+
+    const headers = { ...this.headers }
+    if (etag) {
+      headers['If-None-Match'] = etag
+    }
+
+    const res = await fetch(url, { headers })
+    this.updateRateLimit(res.headers)
+
+    // 304 Not Modified - content hasn't changed
+    if (res.status === 304) {
+      return { content: null, etag, notModified: true }
+    }
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        return { content: null, notModified: false }
+      }
+      throw new Error(`Failed to get ${filename} for ${featureId} on ${branch}: ${res.status}`)
+    }
+
+    const data: GitHubContent = await res.json()
+    const newETag = res.headers.get('ETag') || undefined
+
+    return {
+      content: data.content ?? null,
+      etag: newETag,
+      notModified: false,
+    }
+  }
 }
+
+// ============================================================================
+// Helper Functions for Validation Service
+// ============================================================================
+
+import type { GitFileSnapshot } from '../types/api.js'
+
+/**
+ * Fetch complete feature snapshot from Git (for validation)
+ * Uses ETag caching to reduce API calls
+ */
+export async function fetchFeatureFromGit(
+  owner: string,
+  repo: string,
+  featureId: string,
+  branch: string,
+  token: string,
+  cachedETag?: string
+): Promise<GitFileSnapshot | null> {
+  const client = new GitHubClient(token, owner, repo)
+
+  try {
+    // Fetch all files in parallel with ETag support
+    const [metaResult, designResult, planResult, prdResult] = await Promise.all([
+      client.getFileContentWithETag(featureId, 'meta.yaml', branch, cachedETag),
+      client.getFileContentWithETag(featureId, 'dev-design.md', branch),
+      client.getFileContentWithETag(featureId, 'dev-plan.md', branch),
+      client.getFileContentWithETag(featureId, 'prd.md', branch),
+    ])
+
+    // If meta.yaml returned 304, content hasn't changed
+    if (metaResult.notModified) {
+      return null  // Indicates no change, caller should use cached data
+    }
+
+    // If meta.yaml doesn't exist, feature doesn't exist
+    if (!metaResult.content) {
+      return null
+    }
+
+    // Decode base64 content
+    const decodeContent = (b64: string | null): string | null => {
+      if (!b64) return null
+      try {
+        return Buffer.from(b64, 'base64').toString('utf-8')
+      } catch {
+        return null
+      }
+    }
+
+    return {
+      meta_yaml: decodeContent(metaResult.content),
+      dev_design_md: decodeContent(designResult.content),
+      dev_plan_md: decodeContent(planResult.content),
+      prd_md: decodeContent(prdResult.content),
+      sha: '', // TODO: get from commit API if needed
+      etag: metaResult.etag,
+      updated_at: Date.now(), // TODO: get from file commit timestamp
+    }
+  } catch (error) {
+    console.error(`[GitHub] Failed to fetch feature ${featureId}:`, error)
+    return null
+  }
+}
+

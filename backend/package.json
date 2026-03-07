@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.0",
     "@types/node": "^25.3.3",
     "hono": "^4.12.3",
     "typescript": "^5.0.0"
