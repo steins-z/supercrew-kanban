@@ -2,6 +2,12 @@
   "buildCommand": "pnpm --filter @vibe/local-web build",
   "outputDirectory": "frontend/packages/local-web/dist",
   "installCommand": "corepack enable && pnpm install",
+  "crons": [
+    {
+      "path": "/api/cron/validate",
+      "schedule": "* * * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api" },
     { "source": "/auth/github", "destination": "/api" },
