@@ -8,7 +8,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import AppHeader from '@web/components/AppHeader'
 import Dock from '@web/components/Dock'
-import { isAuthenticated, clearToken, getSelectedRepo, clearSelectedRepo, useRecentProjects } from '@vibe/app-core'
+import { isAuthenticated, clearToken, getSelectedRepo, clearSelectedRepo, useRecentProjects, useRepo } from '@vibe/app-core'
 import type { DockItemConfig } from '@web/components/Dock'
 
 const PUBLIC_PATHS = ['/login', '/oauth-callback', '/welcome']
@@ -16,6 +16,7 @@ const PUBLIC_PATHS = ['/login', '/oauth-callback', '/welcome']
 function RootLayout() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const { repo } = useRepo()
   const { addRecentProject } = useRecentProjects()
   const [dark, setDark] = useState(() =>
     typeof window !== 'undefined'
@@ -60,7 +61,6 @@ function RootLayout() {
     if (PUBLIC_PATHS.includes(pathname)) return
     if (!isAuthenticated()) return
 
-    const repo = getSelectedRepo()
     if (repo) {
       addRecentProject(repo)
     }
