@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   LightningIcon, SunIcon, MoonIcon, LinkBreakIcon, SignOutIcon, GlobeIcon,
 } from '@phosphor-icons/react'
+import ProjectSwitcher from './ProjectSwitcher'
+import ProjectSelectorModal from './ProjectSelectorModal'
 
 interface AppHeaderProps {
   dark: boolean
@@ -52,6 +55,7 @@ function HeaderBtn({
 export default function AppHeader({ dark, onToggleTheme, onLogout, onDisconnect }: AppHeaderProps) {
   const { t, i18n } = useTranslation()
   const isZh = i18n.language.startsWith('zh')
+  const [showModal, setShowModal] = useState(false)
 
   return (
     <header style={{
@@ -65,7 +69,7 @@ export default function AppHeader({ dark, onToggleTheme, onLogout, onDisconnect 
       zIndex: 20,
     }}>
       {/* ── Logo ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{
           width: 28, height: 28, borderRadius: 8,
           background: 'linear-gradient(135deg, var(--rb-accent) 0%, var(--rb-accent2) 100%)',
@@ -84,6 +88,14 @@ export default function AppHeader({ dark, onToggleTheme, onLogout, onDisconnect 
           Super Crew
         </span>
       </div>
+
+      {/* ── Project Switcher ── */}
+      <div style={{ marginLeft: 16 }}>
+        <ProjectSwitcher onOpenFullSelector={() => setShowModal(true)} />
+      </div>
+
+      {/* ── Spacer ── */}
+      <div style={{ flex: 1 }} />
 
       {/* ── Controls ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -112,6 +124,9 @@ export default function AppHeader({ dark, onToggleTheme, onLogout, onDisconnect 
           onClick={onLogout}
         />
       </div>
+
+      {/* ── Project Selector Modal ── */}
+      <ProjectSelectorModal open={showModal} onOpenChange={setShowModal} />
     </header>
   )
 }
