@@ -1,6 +1,6 @@
 // GitHub API client for reading .supercrew/tasks/
 
-import type { FeatureMeta, FeatureBoard, Feature, DesignDoc, PlanDoc, SupercrewStatus } from './types.js'
+import type { FeatureMeta, FeatureBoard, Feature, DesignDoc, PlanDoc, SupercrewStatus, BoardResponse } from './types.js'
 import { getAccessToken, clearToken } from './auth.js'
 
 const GH_API = 'https://api.github.com'
@@ -340,3 +340,43 @@ export async function fetchBoardMultiBranch(): Promise<FeatureBoard> {
 
   return res.json()
 }
+
+// ─── Database-First Board API ──────────────────────────────────────────────
+
+/**
+ * Fetch board from database (DB-first mode)
+ * Faster than Git scanning, includes real-time agent updates
+ */
+export async function fetchBoardFromDb(): Promise<FeatureBoard> {
+  const repo = getSelectedRepo()
+  if (!repo) {
+    return {
+      features: [],
+      featuresByStatus: {
+        todo: [], doing: [], 'ready-to-ship': [], shipped: [],
+      },
+    }
+  }
+
+  // Call backend database API
+  const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3001'
+  const res = await fetch(
+    `${backendUrl}/api/board?repo_owner=${encodeURIComponent(repo.owner)}&repo_name=${encodeURIComponent(repo.repo)}`
+  )
+
+  if (!res.ok) {
+    throw new Error(`Database API error: ${res.status} ${res.statusText}`)
+  }
+
+  const data: BoardResponse = await res.json()
+
+  // Convert BoardResponse to FeatureBoard format
+  const features = Object.values(data.features).flat()
+
+  return {
+    features,
+    featuresByStatus: data.features,
+    metadata: data.metadata,
+  }
+}
+
