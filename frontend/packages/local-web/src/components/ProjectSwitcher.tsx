@@ -14,6 +14,12 @@ export default function ProjectSwitcher({ onOpenFullSelector }: ProjectSwitcherP
   const [open, setOpen] = useState(false)
 
   const handleSelectProject = (selectedRepo: typeof recentRepos[0]) => {
+    // Skip if already on this project
+    if (repo?.full_name === selectedRepo.full_name) {
+      setOpen(false)
+      return
+    }
+
     switchProject({
       owner: selectedRepo.owner,
       repo: selectedRepo.repo,

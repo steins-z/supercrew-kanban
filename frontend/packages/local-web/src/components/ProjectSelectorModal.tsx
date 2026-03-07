@@ -9,13 +9,19 @@ interface ProjectSelectorModalProps {
 }
 
 export default function ProjectSelectorModal({ open, onOpenChange }: ProjectSelectorModalProps) {
-  const { switchProject } = useRepo()
+  const { repo, switchProject } = useRepo()
 
-  const handleSelect = (repo: GitHubRepo) => {
+  const handleSelect = (selectedRepo: GitHubRepo) => {
+    // Skip if already on this project
+    if (repo?.full_name === selectedRepo.full_name) {
+      onOpenChange(false)
+      return
+    }
+
     switchProject({
-      owner: repo.owner.login,
-      repo: repo.name,
-      full_name: repo.full_name,
+      owner: selectedRepo.owner.login,
+      repo: selectedRepo.name,
+      full_name: selectedRepo.full_name,
     })
     onOpenChange(false)
   }
