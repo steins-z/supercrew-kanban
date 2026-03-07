@@ -8,7 +8,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import AppHeader from '@web/components/AppHeader'
 import Dock from '@web/components/Dock'
-import { isAuthenticated, clearToken, getSelectedRepo, clearSelectedRepo } from '@vibe/app-core'
+import { isAuthenticated, clearToken, getSelectedRepo, clearSelectedRepo, useRecentProjects } from '@vibe/app-core'
 import type { DockItemConfig } from '@web/components/Dock'
 
 const PUBLIC_PATHS = ['/login', '/oauth-callback', '/welcome']
@@ -16,6 +16,7 @@ const PUBLIC_PATHS = ['/login', '/oauth-callback', '/welcome']
 function RootLayout() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const { addRecentProject } = useRecentProjects()
   const [dark, setDark] = useState(() =>
     typeof window !== 'undefined'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -53,6 +54,17 @@ function RootLayout() {
       navigate({ to: '/welcome' })
     }
   }, [pathname])
+
+  // Auto-add current project to recent list when app loads
+  useEffect(() => {
+    if (PUBLIC_PATHS.includes(pathname)) return
+    if (!isAuthenticated()) return
+
+    const repo = getSelectedRepo()
+    if (repo) {
+      addRecentProject(repo)
+    }
+  }, []) // Run once on mount
 
   function handleLogout() {
     clearToken()
