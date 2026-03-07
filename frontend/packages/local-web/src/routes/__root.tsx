@@ -1,5 +1,5 @@
 import { Outlet, createRootRoute, useRouterState, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   SquaresFourIcon,
@@ -18,6 +18,7 @@ function RootLayout() {
   const queryClient = useQueryClient()
   const { repo } = useRepo()
   const { addRecentProject } = useRecentProjects()
+  const hasAddedInitialProject = useRef(false)
   const [dark, setDark] = useState(() =>
     typeof window !== 'undefined'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -58,13 +59,15 @@ function RootLayout() {
 
   // Auto-add current project to recent list when app loads
   useEffect(() => {
+    if (hasAddedInitialProject.current) return
     if (PUBLIC_PATHS.includes(pathname)) return
     if (!isAuthenticated()) return
 
     if (repo) {
       addRecentProject(repo)
+      hasAddedInitialProject.current = true
     }
-  }, []) // Run once on mount
+  }, [pathname, repo, addRecentProject])
 
   function handleLogout() {
     clearToken()
