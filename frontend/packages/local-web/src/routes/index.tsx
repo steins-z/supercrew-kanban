@@ -6,7 +6,7 @@ import SpotlightCard from '@web/components/SpotlightCard'
 import CountUp from '@web/components/CountUp'
 import ClickSpark from '@web/components/ClickSpark'
 import AnimatedCard from '@web/components/AnimatedCard'
-import BoardMetadataBanner from '@web/components/BoardMetadataBanner'
+import { BoardMetadataBanner } from '@web/components/BoardMetadataBanner'
 
 // ─── Column config ──────────────────────────────────────────────────────────
 
@@ -64,7 +64,6 @@ function BoardPage() {
         <BoardMetadataBanner
           metadata={metadata}
           onRefresh={refresh}
-          lastRefresh={lastRefresh}
         />
       )}
 
