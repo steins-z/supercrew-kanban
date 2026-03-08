@@ -3,6 +3,7 @@
 import { Hono } from 'hono'
 import type { BoardResponse } from '../types/board.js'
 import type { SupercrewStatus } from '../types/shared.js'
+import type { FileSnapshot } from '../types/board.js'
 import { BranchScanner } from '../services/branch-scanner.js'
 import { FeatureDiff } from '../services/feature-diff.js'
 
@@ -13,6 +14,120 @@ function toIso(value: unknown): string {
   if (typeof value === 'bigint') return new Date(Number(value)).toISOString()
   if (typeof value === 'string') return new Date(value).toISOString()
   return new Date(0).toISOString()
+}
+
+// ─── Helper: Sync Git snapshots to database ────────────────────────────────
+
+/**
+ * Background task to sync Git-scanned features to database
+ * This allows Git mode scans to populate the database for database mode
+ */
+async function syncFeaturesToDatabase(
+  repoOwner: string,
+  repoName: string,
+  snapshots: FileSnapshot[]
+): Promise<void> {
+  const { upsertFeature } = await import('../services/database.js')
+
+  // Build feature map (deduplicate by feature ID, prefer main branch)
+  const featureMap = new Map<string, FileSnapshot>()
+
+  for (const snapshot of snapshots) {
+    if (snapshot.branch === 'main' || snapshot.branch.startsWith('user/')) {
+      if (!featureMap.has(snapshot.featureId)) {
+        featureMap.set(snapshot.featureId, snapshot)
+      } else if (snapshot.branch === 'main') {
+        // Prefer main branch
+        featureMap.set(snapshot.featureId, snapshot)
+      }
+    }
+  }
+
+  // Parse and upsert each feature
+  for (const [featureId, snapshot] of featureMap) {
+    try {
+      const metaParsed = parseMetaYaml(snapshot.files.meta || '')
+      const now = Date.now()
+
+      await upsertFeature({
+        id: featureId,
+        repo_owner: repoOwner,
+        repo_name: repoName,
+        title: metaParsed.title || featureId,
+        status: normalizeStatus(metaParsed.status),
+        owner: metaParsed.owner,
+        priority: metaParsed.priority,
+        progress: metaParsed.progress || 0,
+        meta_yaml: snapshot.files.meta || undefined,
+        dev_design_md: snapshot.files.design || undefined,
+        dev_plan_md: snapshot.files.plan || undefined,
+        source: 'git',
+        verified: true,
+        sync_state: 'synced',
+        last_git_checked_at: now,
+        last_git_commit_at: now,
+        created_at: now,
+        updated_at: now,
+        verified_at: now,
+      })
+    } catch (error) {
+      console.error(`[syncFeaturesToDatabase] Failed to sync ${featureId}:`, error)
+    }
+  }
+
+  console.log(`[syncFeaturesToDatabase] Synced ${featureMap.size} features to database`)
+}
+
+/**
+ * Parse meta.yaml content
+ */
+function parseMetaYaml(content: string): {
+  title?: string
+  status?: string
+  owner?: string
+  priority?: string
+  progress?: number
+} {
+  const result: any = {}
+
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+
+    const colonIdx = trimmed.indexOf(':')
+    if (colonIdx === -1) continue
+
+    const key = trimmed.slice(0, colonIdx).trim()
+    let value: any = trimmed.slice(colonIdx + 1).trim()
+
+    // Remove quotes
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1)
+    }
+
+    // Parse numbers
+    if (!isNaN(Number(value)) && value !== '') {
+      value = Number(value)
+    }
+
+    result[key] = value
+  }
+
+  return result
+}
+
+/**
+ * Normalize status to valid SupercrewStatus
+ */
+function normalizeStatus(status: any): SupercrewStatus {
+  const normalized = String(status || 'todo').toLowerCase().trim()
+  if (['todo', 'doing', 'ready-to-ship', 'shipped'].includes(normalized)) {
+    return normalized as SupercrewStatus
+  }
+  return 'todo'
 }
 
 // ============================================================================
@@ -305,6 +420,12 @@ boardRouter.get('/multi-branch', async (c) => {
     // Step 3: Compute diffs and build cards
     const differ = new FeatureDiff(snapshots)
     const features = differ.buildFeatureCards()
+
+    // Step 3.5: Sync features to database (background, non-blocking)
+    // This ensures Git scan results are also available in database mode
+    syncFeaturesToDatabase(owner, repo, snapshots).catch(err => {
+      console.error('[board/multi-branch] Database sync failed (non-critical):', err)
+    })
 
     // Step 4: Group by status
     const featuresByStatus: Record<SupercrewStatus, typeof features> = {
