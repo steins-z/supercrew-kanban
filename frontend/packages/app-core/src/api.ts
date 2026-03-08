@@ -326,7 +326,7 @@ export async function fetchBoardMultiBranch(): Promise<FeatureBoard> {
 
   // Call backend API
   const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3001'
-  const res = await fetch(`${backendUrl}/api/board/multi-branch`, {
+  const res = await fetch(`${backendUrl}/api/board/multi-branch?branch_pattern=user/*`, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-Repo-Owner': repo.owner,
