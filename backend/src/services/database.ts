@@ -25,6 +25,15 @@ export const db: Client = createClient({
 // Type Definitions
 // ============================================================================
 
+export type SyncState =
+  | 'local_only'       // Agent data, has_upstream = false (no validation needed)
+  | 'pending_push'     // Agent data, branch not on remote yet (commits_ahead > 0)
+  | 'pending_verify'   // Agent data, awaiting validation
+  | 'synced'           // Validated and matches Git
+  | 'conflict'         // SHA differs, timestamp comparison needed
+  | 'error'            // Validation failed (GitHub API error, etc.)
+  | 'git_missing'      // Branch deleted on remote
+
 export interface FeatureData {
   id: string
   repo_owner: string
@@ -40,9 +49,17 @@ export interface FeatureData {
   prd_md?: string
   source: 'git' | 'agent' | 'agent_verified' | 'agent_stale' | 'agent_orphaned'
   verified: boolean
+
+  /**
+   * GitHub API blob SHA for the meta.yaml file.
+   * Used for ETag-based caching and detecting content changes.
+   */
   git_sha?: string
+
+  /** For GitHub API conditional requests (If-None-Match) */
   git_etag?: string
-  sync_state?: 'synced' | 'pending_verify' | 'conflict' | 'git_missing' | 'error'
+
+  sync_state?: SyncState
   last_git_checked_at?: number
   last_git_commit_at?: number
   last_db_write_at?: number
@@ -50,6 +67,13 @@ export interface FeatureData {
   created_at: number
   updated_at: number
   verified_at?: number
+
+  /**
+   * SHA of the last Git commit that modified this feature's files.
+   * Used for commit-level validation and conflict detection.
+   * Populated by Agent git_metadata or fetched via Commits API.
+   */
+  git_commit_sha?: string | null
 }
 
 export interface BranchData {
