@@ -19,6 +19,41 @@ function toIso(value: unknown): string {
 // ─── Helper: Sync Git snapshots to database ────────────────────────────────
 
 /**
+ * Scan Git and sync features to database (blocking version for auto-sync)
+ */
+async function scanAndSyncFromGit(
+  repoOwner: string,
+  repoName: string,
+  githubToken: string
+): Promise<void> {
+  console.log(`[scanAndSyncFromGit] Starting Git scan for ${repoOwner}/${repoName}`)
+
+  // Scan Git branches
+  const scanner = new BranchScanner(githubToken, repoOwner, repoName)
+  const branches = await scanner.discoverBranches('user/*')
+
+  console.log(`[scanAndSyncFromGit] Discovered ${branches.length} branches`)
+
+  if (branches.length === 0) {
+    console.log('[scanAndSyncFromGit] No branches found, nothing to sync')
+    return
+  }
+
+  // Fetch all features from branches
+  const snapshots = await scanner.fetchAllFeatures(branches)
+
+  console.log(`[scanAndSyncFromGit] Fetched ${snapshots.length} snapshots`)
+
+  if (snapshots.length === 0) {
+    console.log('[scanAndSyncFromGit] No features found, nothing to sync')
+    return
+  }
+
+  // Sync to database
+  await syncFeaturesToDatabase(repoOwner, repoName, snapshots)
+}
+
+/**
  * Background task to sync Git-scanned features to database
  * This allows Git mode scans to populate the database for database mode
  */
@@ -138,6 +173,7 @@ boardRouter.get('/', async (c) => {
   try {
     const repoOwner = c.req.query('repo_owner')
     const repoName = c.req.query('repo_name')
+    const autoSync = c.req.query('auto_sync') !== 'false' // Default: true
 
     if (!repoOwner || !repoName) {
       return c.json({ error: 'Missing required query params: repo_owner, repo_name' }, 400)
@@ -173,6 +209,62 @@ boardRouter.get('/', async (c) => {
             ORDER BY f.updated_at DESC`,
       args: [repoOwner, repoName],
     })
+
+    // 1.5. If database is empty and auto_sync enabled, trigger Git scan
+    if (featuresResult.rows.length === 0 && autoSync) {
+      console.log('[API] Database empty, triggering Git scan + sync...')
+
+      // Get OAuth token from Authorization header (if available)
+      const authHeader = c.req.header('Authorization')
+      const token = authHeader?.replace('Bearer ', '')
+
+      if (token) {
+        try {
+          // Scan Git and sync to database (blocking to ensure data is available)
+          await scanAndSyncFromGit(repoOwner, repoName, token)
+
+          // Re-fetch features after sync
+          const syncedResult = await db.execute({
+            sql: `SELECT
+                    f.id,
+                    f.repo_owner,
+                    f.repo_name,
+                    f.title,
+                    f.status,
+                    f.owner,
+                    f.priority,
+                    f.progress,
+                    f.source,
+                    f.verified,
+                    f.sync_state,
+                    f.last_git_checked_at,
+                    f.last_sync_error,
+                    f.created_at,
+                    f.updated_at,
+                    f.verified_at,
+                    f.git_sha,
+                    f.meta_yaml,
+                    f.dev_design_md,
+                    f.dev_plan_md,
+                    f.prd_md
+                  FROM features f
+                  WHERE f.repo_owner = ? AND f.repo_name = ?
+                  ORDER BY f.updated_at DESC`,
+            args: [repoOwner, repoName],
+          })
+
+          // Use synced results
+          featuresResult.rows = syncedResult.rows
+
+          console.log(`[API] Auto-sync completed: ${syncedResult.rows.length} features synced`)
+        } catch (syncError) {
+          console.error('[API] Auto-sync failed (non-critical):', syncError)
+          // Continue with empty results
+        }
+      } else {
+        console.log('[API] No OAuth token provided, skipping auto-sync')
+      }
+    }
 
     // 2. Fetch branch information
     const branchesResult = await db.execute({

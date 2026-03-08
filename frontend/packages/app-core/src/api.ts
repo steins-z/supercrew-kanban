@@ -346,6 +346,7 @@ export async function fetchBoardMultiBranch(): Promise<FeatureBoard> {
 /**
  * Fetch board from database (DB-first mode)
  * Faster than Git scanning, includes real-time agent updates
+ * Auto-syncs from Git if database is empty
  */
 export async function fetchBoardFromDb(): Promise<FeatureBoard> {
   const repo = getSelectedRepo()
@@ -358,10 +359,18 @@ export async function fetchBoardFromDb(): Promise<FeatureBoard> {
     }
   }
 
-  // Call backend database API
+  const token = getAccessToken()
+  if (!token) throw new Error('Not authenticated')
+
+  // Call backend database API with OAuth token for auto-sync
   const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3001'
   const res = await fetch(
-    `${backendUrl}/api/board?repo_owner=${encodeURIComponent(repo.owner)}&repo_name=${encodeURIComponent(repo.repo)}`
+    `${backendUrl}/api/board?repo_owner=${encodeURIComponent(repo.owner)}&repo_name=${encodeURIComponent(repo.repo)}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    }
   )
 
   if (!res.ok) {
