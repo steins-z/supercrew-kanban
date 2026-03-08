@@ -10,6 +10,7 @@ import {
   markFeatureVerified,
   deleteValidationJob,
   incrementValidationAttempts,
+  isFalsish,
 } from './database.js'
 import { fetchFeatureFromGit } from './github.js'
 
@@ -31,7 +32,28 @@ export class ValidationService {
     githubToken: string
   ): Promise<ValidationResult> {
     try {
-      // 1. Fetch from Git (source of truth)
+      // 1. Get current DB state
+      const dbData = await getFeature(repoOwner, repoName, featureId)
+
+      // Fast path: Skip GitHub validation for local-only branches
+      if (dbData && isFalsish(dbData.has_upstream)) {
+        console.log(`[Validation] Fast path: ${featureId} is local-only (no upstream)`)
+        await upsertFeature({
+          ...dbData,
+          sync_state: 'local_only',
+          source: 'agent',      // Keep as agent source
+          verified: false,      // Not verified against Git
+          last_git_checked_at: Date.now(),
+        })
+
+        return {
+          feature_id: featureId,
+          success: true,
+          action: 'local_only',
+        }
+      }
+
+      // 2. Fetch from Git (source of truth)
       const gitResult = await fetchFeatureFromGit(
         repoOwner,
         repoName,
@@ -39,9 +61,6 @@ export class ValidationService {
         branch,
         githubToken
       )
-
-      // 2. Get current DB state
-      const dbData = await getFeature(repoOwner, repoName, featureId)
 
       if (!dbData && gitResult.kind !== 'snapshot') {
         return {

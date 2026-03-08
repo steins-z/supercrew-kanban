@@ -34,6 +34,14 @@ export type SyncState =
   | 'error'            // Validation failed (GitHub API error, etc.)
   | 'git_missing'      // Branch deleted on remote
 
+/**
+ * Helper to check if a value is falsy in SQLite context
+ * SQLite stores booleans as 0/1, so we need to check both
+ */
+export function isFalsish(value: boolean | number | null | undefined): boolean {
+  return value === false || value === 0 || value === null || value === undefined
+}
+
 export interface FeatureData {
   id: string
   repo_owner: string
@@ -74,6 +82,12 @@ export interface FeatureData {
    * Populated by Agent git_metadata or fetched via Commits API.
    */
   git_commit_sha?: string | null
+
+  // Git metadata from Agent (new)
+  has_upstream?: boolean              // Whether branch has remote tracking
+  branch_exists_on_remote?: boolean   // Whether branch exists on remote
+  commits_ahead?: number              // Number of commits ahead of remote
+  branch?: string                     // Branch name
 }
 
 export interface BranchData {
@@ -157,8 +171,9 @@ export async function upsertFeature(data: FeatureData): Promise<void> {
       meta_yaml, dev_design_md, dev_plan_md, prd_md,
       source, verified, git_sha, git_etag, sync_state, git_commit_sha,
       last_git_checked_at, last_git_commit_at, last_db_write_at, last_sync_error,
+      has_upstream, branch_exists_on_remote, commits_ahead, branch,
       created_at, updated_at, verified_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(repo_owner, repo_name, id) DO UPDATE SET
       title = excluded.title,
       status = excluded.status,
@@ -179,6 +194,10 @@ export async function upsertFeature(data: FeatureData): Promise<void> {
       last_git_commit_at = excluded.last_git_commit_at,
       last_db_write_at = excluded.last_db_write_at,
       last_sync_error = excluded.last_sync_error,
+      has_upstream = excluded.has_upstream,
+      branch_exists_on_remote = excluded.branch_exists_on_remote,
+      commits_ahead = excluded.commits_ahead,
+      branch = excluded.branch,
       updated_at = excluded.updated_at,
       verified_at = excluded.verified_at`,
     args: [
@@ -204,6 +223,10 @@ export async function upsertFeature(data: FeatureData): Promise<void> {
       data.last_git_commit_at || null,
       data.last_db_write_at || null,
       data.last_sync_error || null,
+      data.has_upstream !== undefined ? (data.has_upstream ? 1 : 0) : null,
+      data.branch_exists_on_remote !== undefined ? (data.branch_exists_on_remote ? 1 : 0) : null,
+      data.commits_ahead || null,
+      data.branch || null,
       data.created_at,
       data.updated_at,
       data.verified_at || null,

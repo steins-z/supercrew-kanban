@@ -333,6 +333,6 @@ export interface ValidationResult {
   feature_id: string
   branch?: string
   success: boolean
-  action: 'verified' | 'updated_from_git' | 'retry' | 'orphaned' | 'failed'
+  action: 'verified' | 'updated_from_git' | 'retry' | 'orphaned' | 'failed' | 'local_only'
   error?: string
 }
