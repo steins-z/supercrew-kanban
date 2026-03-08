@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { GitHubClient } from '../src/services/github'
+import { GitHubClient, fetchFeatureFromGit } from '../src/services/github'
 
 describe('GitHubClient.fetchCommitInfo', () => {
   const skipIfNoToken = () => {
@@ -51,5 +51,31 @@ describe('GitHubClient.fetchCommitInfo', () => {
 
     expect(result.sha).toBe('')
     expect(result.timestamp).toBe(0)
+  })
+
+  test('fetchFeatureFromGit includes real commit info', async () => {
+    if (skipIfNoToken()) {
+      expect(true).toBe(true)  // Skip test gracefully
+      return
+    }
+
+    const result = await fetchFeatureFromGit(
+      'steins-z',
+      'supercrew-kanban',
+      'simplified-status-schema',
+      'main',
+      process.env.GITHUB_TOKEN!
+    )
+
+    // Should return a snapshot
+    expect(result.kind).toBe('snapshot')
+    if (result.kind !== 'snapshot') return
+
+    // Should have real commit SHA (not empty string)
+    expect(result.data.sha).toMatch(/^[0-9a-f]{40}$/)
+
+    // Should have real timestamp (not Date.now())
+    expect(result.data.updated_at).toBeGreaterThan(0)
+    expect(result.data.updated_at).toBeLessThan(Date.now())  // Should be in the past
   })
 })

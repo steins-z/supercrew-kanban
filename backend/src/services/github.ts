@@ -238,14 +238,23 @@ export async function fetchFeatureFromGit(
   cachedETag?: string
 ): Promise<GitFeatureFetchResult> {
   const client = new GitHubClient(token, owner, repo)
+  const featurePath = `${FEATURES_PATH}/${featureId}`
 
   try {
-    // Fetch all files in parallel with ETag support
-    const [metaResult, designResult, planResult, prdResult] = await Promise.all([
+    // Fetch all files and commit info in parallel with ETag support
+    const [metaResult, designResult, planResult, prdResult, commitInfo] = await Promise.all([
       client.getFileContentWithETag(featureId, 'meta.yaml', branch, cachedETag),
       client.getFileContentWithETag(featureId, 'dev-design.md', branch),
       client.getFileContentWithETag(featureId, 'dev-plan.md', branch),
       client.getFileContentWithETag(featureId, 'prd.md', branch),
+      // Fetch commit info in parallel with files, with error handling
+      client.fetchCommitInfo({
+        branch,
+        path: `${featurePath}/meta.yaml`
+      }).catch(error => {
+        console.warn(`[GitHub] Could not fetch commit info for ${featureId}:`, error)
+        return { sha: '', timestamp: 0 }  // Unknown commit info (failed to fetch)
+      })
     ])
 
     // If meta.yaml returned 304, content hasn't changed
@@ -273,9 +282,9 @@ export async function fetchFeatureFromGit(
       dev_design_md: decodeContent(designResult.content),
       dev_plan_md: decodeContent(planResult.content),
       prd_md: decodeContent(prdResult.content),
-      sha: '', // TODO: fetch from commit API
+      sha: commitInfo.sha,
       etag: metaResult.etag,
-      updated_at: Date.now(), // TODO: fetch commit timestamp
+      updated_at: commitInfo.timestamp * 1000, // Convert seconds to milliseconds
     }
 
     return { kind: 'snapshot', data: snapshot }
