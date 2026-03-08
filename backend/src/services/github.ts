@@ -155,6 +155,42 @@ export class GitHubClient {
       notModified: false,
     }
   }
+
+  /**
+   * Fetch commit info for a specific file from GitHub Commits API
+   * Returns the SHA and timestamp of the last commit that modified the file
+   */
+  async fetchCommitInfo(params: {
+    branch: string
+    path: string
+  }): Promise<{ sha: string; timestamp: number }> {
+    this.checkRateLimit()
+
+    const { branch, path } = params
+    const url = `${GITHUB_API_BASE}/repos/${this.owner}/${this.repo}/commits?sha=${branch}&path=${encodeURIComponent(path)}&per_page=1`
+
+    const res = await fetch(url, { headers: this.headers })
+    this.updateRateLimit(res.headers)
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        return { sha: '', timestamp: 0 }
+      }
+      throw new Error(`GitHub API error: ${res.status} ${res.statusText}`)
+    }
+
+    const commits = await res.json()
+
+    if (!Array.isArray(commits) || commits.length === 0) {
+      return { sha: '', timestamp: 0 }
+    }
+
+    const latestCommit = commits[0]
+    return {
+      sha: latestCommit.sha,
+      timestamp: new Date(latestCommit.commit.committer.date).getTime() / 1000,
+    }
+  }
 }
 
 function classifyGitFetchError(error: unknown): {
