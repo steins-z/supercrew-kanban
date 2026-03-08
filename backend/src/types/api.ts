@@ -85,6 +85,7 @@ export interface FeatureMetaWithBranches {
   verified: boolean
   source: 'git' | 'agent' | 'agent_stale' | 'agent_orphaned'
   freshness: 'verified' | 'realtime' | 'stale' | 'orphaned'
+  sync_state?: 'synced' | 'pending_verify' | 'conflict' | 'git_missing' | 'error'
   updated_at: string  // ISO 8601
   verified_at?: string  // ISO 8601
   git_sha?: string
@@ -162,6 +163,7 @@ export interface FeatureDetailResponse {
   // Verification info
   verified: boolean
   source: 'git' | 'agent' | 'agent_stale' | 'agent_orphaned'
+  sync_state?: 'synced' | 'pending_verify' | 'conflict' | 'git_missing' | 'error'
   git_sha?: string
   updated_at: string
   verified_at?: string
@@ -291,6 +293,14 @@ export interface GitFileSnapshot {
   etag?: string
   updated_at: number  // Unix timestamp ms
 }
+
+export type GitFeatureFetchErrorType = 'transient_error' | 'auth_error' | 'unknown_error'
+
+export type GitFeatureFetchResult =
+  | { kind: 'snapshot'; data: GitFileSnapshot }
+  | { kind: 'not_found' }
+  | { kind: 'not_modified'; etag?: string }
+  | { kind: GitFeatureFetchErrorType; error: string }
 
 /**
  * Validation job result

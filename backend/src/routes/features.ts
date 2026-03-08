@@ -28,8 +28,8 @@ featuresRouter.post('/report', validateApiKey, async (c) => {
     }
 
     // Validate API key scope (ensure key can only update its own repo)
-    const allowedOwner = c.get('repo_owner')
-    const allowedRepo = c.get('repo_name')
+    const allowedOwner = String((c as any).get('repo_owner') ?? '')
+    const allowedRepo = String((c as any).get('repo_name') ?? '')
 
     if (body.repo_owner !== allowedOwner || body.repo_name !== allowedRepo) {
       return c.json(
@@ -62,12 +62,15 @@ featuresRouter.post('/report', validateApiKey, async (c) => {
       owner: data.owner,
       priority: data.priority,
       progress: data.progress || 0,
-      meta_yaml: data.meta_yaml || null,
-      dev_design_md: data.dev_design_md || null,
-      dev_plan_md: data.dev_plan_md || null,
-      prd_md: data.prd_md || null,
+      meta_yaml: data.meta_yaml || undefined,
+      dev_design_md: data.dev_design_md || undefined,
+      dev_plan_md: data.dev_plan_md || undefined,
+      prd_md: data.prd_md || undefined,
       source: 'agent',
       verified: false,
+      sync_state: 'pending_verify',
+      last_db_write_at: now,
+      last_sync_error: undefined,
       created_at: now,
       updated_at: now,
     })
@@ -132,8 +135,8 @@ featuresRouter.post('/batch', validateApiKey, async (c) => {
     }
 
     // Validate API key scope
-    const allowedOwner = c.get('repo_owner')
-    const allowedRepo = c.get('repo_name')
+    const allowedOwner = String((c as any).get('repo_owner') ?? '')
+    const allowedRepo = String((c as any).get('repo_name') ?? '')
 
     if (body.repo_owner !== allowedOwner || body.repo_name !== allowedRepo) {
       return c.json(
@@ -181,12 +184,15 @@ featuresRouter.post('/batch', validateApiKey, async (c) => {
           owner: data.owner,
           priority: data.priority,
           progress: data.progress || 0,
-          meta_yaml: data.meta_yaml || null,
-          dev_design_md: data.dev_design_md || null,
-          dev_plan_md: data.dev_plan_md || null,
-          prd_md: data.prd_md || null,
+          meta_yaml: data.meta_yaml || undefined,
+          dev_design_md: data.dev_design_md || undefined,
+          dev_plan_md: data.dev_plan_md || undefined,
+          prd_md: data.prd_md || undefined,
           source: 'agent',
           verified: false,
+          sync_state: 'pending_verify',
+          last_db_write_at: now,
+          last_sync_error: undefined,
           created_at: now,
           updated_at: now,
         })
@@ -288,6 +294,7 @@ featuresRouter.get('/:id', async (c) => {
       prd: prd.body ? prd : undefined,
       verified: Boolean(feature.verified),
       source: feature.source,
+      sync_state: feature.sync_state,
       git_sha: feature.git_sha,
       updated_at: new Date(feature.updated_at).toISOString(),
       verified_at: feature.verified_at ? new Date(feature.verified_at).toISOString() : undefined,

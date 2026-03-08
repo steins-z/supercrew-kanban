@@ -131,7 +131,7 @@ export class FeatureDiff {
 
   // ─── YAML Parsing ─────────────────────────────────────────────────────
 
-  private parseMetaYaml(base64Content: string): Partial<FeatureMeta> {
+  private parseMetaYaml(base64Content: string): FeatureMeta {
     try {
       // Decode base64
       const content = Buffer.from(base64Content, 'base64').toString('utf-8')
@@ -140,18 +140,27 @@ export class FeatureDiff {
       const lines = content.split('\n')
       const meta: Record<string, any> = {}
 
-      for (const line of lines) {
-        const match = line.match(/^([a-z_]+):\s*(.+)$/)
-        if (!match) continue
+    for (const line of lines) {
+      const match = line.match(/^([a-z_]+):\s*(.+)$/)
+      if (!match) continue
 
-        const [, key, value] = match
-        meta[key] = this.parseYamlValue(value.trim())
-      }
+      const [, key, value] = match
+      meta[key] = this.parseYamlValue(value.trim())
+    }
+
+    if (
+      meta.status !== 'todo' &&
+      meta.status !== 'doing' &&
+      meta.status !== 'ready-to-ship' &&
+      meta.status !== 'shipped'
+    ) {
+      meta.status = 'todo'
+    }
 
       return {
         id: meta.id ?? '',
         title: meta.title ?? '',
-        status: meta.status ?? 'planning',
+        status: meta.status ?? 'todo',
         owner: meta.owner ?? '',
         priority: meta.priority ?? 'P2',
         teams: meta.teams ?? [],
@@ -160,13 +169,13 @@ export class FeatureDiff {
         updated: meta.updated ?? '',
         tags: meta.tags ?? [],
         blocked_by: meta.blocked_by ?? [],
-      } as FeatureMeta
+      }
     } catch (error) {
       // Failed to parse, return minimal meta
       return {
         id: '',
         title: 'Parse Error',
-        status: 'planning',
+        status: 'todo',
         owner: '',
         priority: 'P2',
         created: '',

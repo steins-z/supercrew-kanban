@@ -14,7 +14,26 @@
       "Bash(git add -A)",
       "Bash(git commit -m \"Merge branch ''main'' into feature/multi-branch-kanban:*)",
       "Bash(git fetch:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "WebSearch",
+      "Bash(git config:*)",
+      "Bash(git:*)",
+      "Bash(brew install:*)",
+      "Bash(turso:*)",
+      "Bash(pnpm add:*)",
+      "Bash(curl:*)",
+      "Bash(sqlite3:*)",
+      "Bash(bun run:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill -9)",
+      "Bash(chmod +x:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm check:*)",
+      "Bash(pnpm:*)",
+      "Bash(npm run:*)",
+      "Bash(sort:*)",
+      "Bash(pkill:*)",
+      "Bash(bun install:*)"
     ]
   }
 }

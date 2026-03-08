@@ -8,6 +8,13 @@ import { FeatureDiff } from '../services/feature-diff.js'
 
 export const boardRouter = new Hono()
 
+function toIso(value: unknown): string {
+  if (typeof value === 'number') return new Date(value).toISOString()
+  if (typeof value === 'bigint') return new Date(Number(value)).toISOString()
+  if (typeof value === 'string') return new Date(value).toISOString()
+  return new Date(0).toISOString()
+}
+
 // ============================================================================
 // GET /api/board - Get Full Board State (DB-first)
 // ============================================================================
@@ -35,6 +42,9 @@ boardRouter.get('/', async (c) => {
               f.progress,
               f.source,
               f.verified,
+              f.sync_state,
+              f.last_git_checked_at,
+              f.last_sync_error,
               f.created_at,
               f.updated_at,
               f.verified_at,
@@ -74,11 +84,16 @@ boardRouter.get('/', async (c) => {
         owner: row.owner || undefined,
         priority: row.priority || undefined,
         progress: row.progress || 0,
-        created: new Date(row.created_at).toISOString(),
-        updated: new Date(row.updated_at).toISOString(),
+        created: toIso(row.created_at),
+        updated: toIso(row.updated_at),
         source: row.source,
         verified: Boolean(row.verified),
-        verified_at: row.verified_at ? new Date(row.verified_at).toISOString() : undefined,
+        sync_state: row.sync_state || undefined,
+        last_git_checked_at: row.last_git_checked_at
+          ? toIso(row.last_git_checked_at)
+          : undefined,
+        last_sync_error: row.last_sync_error || undefined,
+        verified_at: row.verified_at ? toIso(row.verified_at) : undefined,
         git_sha: row.git_sha || undefined,
         branches: [],
       }
@@ -95,7 +110,7 @@ boardRouter.get('/', async (c) => {
           status: row.status,
           progress: row.progress || 0,
           verified: Boolean(row.verified),
-          updated: new Date(row.updated_at).toISOString(),
+          updated: toIso(row.updated_at),
         })
       }
     }
@@ -185,7 +200,7 @@ boardRouter.get('/branches', async (c) => {
         priority: row.priority || undefined,
         progress: row.progress || 0,
         verified: Boolean(row.verified),
-        updated: new Date(row.updated_at).toISOString(),
+        updated: toIso(row.updated_at),
       }))
 
       return c.json({
@@ -216,7 +231,7 @@ boardRouter.get('/branches', async (c) => {
     const branches = result.rows.map((row: any) => ({
       name: row.branch_name,
       feature_count: row.feature_count,
-      last_updated: new Date(row.last_updated).toISOString(),
+      last_updated: toIso(row.last_updated),
     }))
 
     return c.json({
@@ -269,7 +284,12 @@ boardRouter.get('/multi-branch', async (c) => {
     if (branches.length === 0) {
       return c.json({
         features: [],
-        featuresByStatus: {},
+        featuresByStatus: {
+          todo: [],
+          doing: [],
+          'ready-to-ship': [],
+          shipped: [],
+        },
         metadata: {
           scannedBranches: [],
           totalBranches: 0,

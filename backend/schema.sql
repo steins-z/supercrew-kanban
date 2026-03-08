@@ -32,6 +32,11 @@ CREATE TABLE IF NOT EXISTS features (
   verified BOOLEAN DEFAULT 0,
   git_sha TEXT,
   git_etag TEXT,  -- for GitHub API conditional requests (If-None-Match)
+  sync_state TEXT CHECK(sync_state IN ('synced', 'pending_verify', 'conflict', 'git_missing', 'error')),
+  last_git_checked_at INTEGER,
+  last_git_commit_at INTEGER,
+  last_db_write_at INTEGER,
+  last_sync_error TEXT,
 
   -- Timestamps (Unix epoch in milliseconds)
   created_at INTEGER NOT NULL,

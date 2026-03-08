@@ -1,6 +1,11 @@
 // GitHub API client wrapper with rate limit tracking
 
 import type { GitHubRef, GitHubContent } from '../types/board.js'
+import type {
+  GitFeatureFetchResult,
+  GitFeatureFetchErrorType,
+  GitFileSnapshot,
+} from '../types/api.js'
 
 const GITHUB_API_BASE = 'https://api.github.com'
 const FEATURES_PATH = '.supercrew/tasks'
@@ -16,9 +21,9 @@ export class GitHubClient {
     private repo: string
   ) {
     this.headers = {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'User-Agent': 'supercrew-kanban',
-      'Accept': 'application/vnd.github.v3+json',
+      Accept: 'application/vnd.github.v3+json',
     }
   }
 
@@ -38,7 +43,7 @@ export class GitHubClient {
       if (waitMs > 0) {
         throw new Error(
           `GitHub API rate limit low (${this.rateLimitRemaining} remaining). ` +
-          `Resets in ${Math.ceil(waitMs / 1000)}s`
+            `Resets in ${Math.ceil(waitMs / 1000)}s`
         )
       }
     }
@@ -83,9 +88,7 @@ export class GitHubClient {
     }
 
     const items: GitHubContent[] = await res.json()
-    return items
-      .filter(item => item.type === 'dir')
-      .map(item => item.name)
+    return items.filter(item => item.type === 'dir').map(item => item.name)
   }
 
   async getFileContent(
@@ -106,7 +109,7 @@ export class GitHubClient {
     }
 
     const data: GitHubContent = await res.json()
-    return data.content ?? null  // Base64 encoded
+    return data.content ?? null // Base64 encoded
   }
 
   /**
@@ -154,11 +157,37 @@ export class GitHubClient {
   }
 }
 
+function classifyGitFetchError(error: unknown): {
+  type: GitFeatureFetchErrorType
+  message: string
+} {
+  const message = error instanceof Error ? error.message : String(error)
+  const lower = message.toLowerCase()
+
+  if (lower.includes('401') || lower.includes('403') || lower.includes('unauthorized')) {
+    return { type: 'auth_error', message }
+  }
+
+  if (
+    lower.includes('timeout') ||
+    lower.includes('429') ||
+    lower.includes('500') ||
+    lower.includes('502') ||
+    lower.includes('503') ||
+    lower.includes('504') ||
+    lower.includes('network') ||
+    lower.includes('fetch') ||
+    lower.includes('rate limit')
+  ) {
+    return { type: 'transient_error', message }
+  }
+
+  return { type: 'unknown_error', message }
+}
+
 // ============================================================================
 // Helper Functions for Validation Service
 // ============================================================================
-
-import type { GitFileSnapshot } from '../types/api.js'
 
 /**
  * Fetch complete feature snapshot from Git (for validation)
@@ -171,7 +200,7 @@ export async function fetchFeatureFromGit(
   branch: string,
   token: string,
   cachedETag?: string
-): Promise<GitFileSnapshot | null> {
+): Promise<GitFeatureFetchResult> {
   const client = new GitHubClient(token, owner, repo)
 
   try {
@@ -185,12 +214,12 @@ export async function fetchFeatureFromGit(
 
     // If meta.yaml returned 304, content hasn't changed
     if (metaResult.notModified) {
-      return null  // Indicates no change, caller should use cached data
+      return { kind: 'not_modified', etag: metaResult.etag }
     }
 
-    // If meta.yaml doesn't exist, feature doesn't exist
+    // If meta.yaml doesn't exist, feature doesn't exist in git
     if (!metaResult.content) {
-      return null
+      return { kind: 'not_found' }
     }
 
     // Decode base64 content
@@ -203,18 +232,23 @@ export async function fetchFeatureFromGit(
       }
     }
 
-    return {
+    const snapshot: GitFileSnapshot = {
       meta_yaml: decodeContent(metaResult.content),
       dev_design_md: decodeContent(designResult.content),
       dev_plan_md: decodeContent(planResult.content),
       prd_md: decodeContent(prdResult.content),
-      sha: '', // TODO: get from commit API if needed
+      sha: '', // TODO: fetch from commit API
       etag: metaResult.etag,
-      updated_at: Date.now(), // TODO: get from file commit timestamp
+      updated_at: Date.now(), // TODO: fetch commit timestamp
     }
+
+    return { kind: 'snapshot', data: snapshot }
   } catch (error) {
-    console.error(`[GitHub] Failed to fetch feature ${featureId}:`, error)
-    return null
+    const classified = classifyGitFetchError(error)
+    console.error(`[GitHub] Failed to fetch feature ${featureId}:`, classified.message)
+    return {
+      kind: classified.type,
+      error: classified.message,
+    }
   }
 }
-

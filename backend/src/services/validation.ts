@@ -13,6 +13,8 @@ import {
 } from './database.js'
 import { fetchFeatureFromGit } from './github.js'
 
+const GRACE_PERIOD_MS = 10 * 60 * 1000
+
 // ============================================================================
 // Validation Service
 // ============================================================================
@@ -30,7 +32,7 @@ export class ValidationService {
   ): Promise<ValidationResult> {
     try {
       // 1. Fetch from Git (source of truth)
-      const gitData = await fetchFeatureFromGit(
+      const gitResult = await fetchFeatureFromGit(
         repoOwner,
         repoName,
         featureId,
@@ -41,8 +43,7 @@ export class ValidationService {
       // 2. Get current DB state
       const dbData = await getFeature(repoOwner, repoName, featureId)
 
-      // 3. Handle missing cases
-      if (!gitData && !dbData) {
+      if (!dbData && gitResult.kind !== 'snapshot') {
         return {
           feature_id: featureId,
           branch,
@@ -52,28 +53,82 @@ export class ValidationService {
         }
       }
 
-      if (!gitData && dbData) {
-        // Feature deleted from Git
-        return await this.handleOrphanedFeature(dbData)
+      if (gitResult.kind === 'transient_error' || gitResult.kind === 'auth_error' || gitResult.kind === 'unknown_error') {
+        if (dbData) {
+          await upsertFeature({
+            ...dbData,
+            verified: false,
+            sync_state: 'error',
+            last_git_checked_at: Date.now(),
+            last_sync_error: gitResult.error,
+          })
+        }
+
+        return {
+          feature_id: featureId,
+          branch,
+          success: false,
+          action: 'retry',
+          error: `Git fetch ${gitResult.kind}: ${gitResult.error}`,
+        }
       }
 
-      if (gitData && !dbData) {
+      if (gitResult.kind === 'not_modified') {
+        if (!dbData) {
+          return {
+            feature_id: featureId,
+            branch,
+            success: false,
+            action: 'failed',
+            error: 'Feature not found in DB for not_modified result',
+          }
+        }
+
+        await markFeatureVerified(repoOwner, repoName, featureId, dbData.git_sha)
+
+        return {
+          feature_id: featureId,
+          success: true,
+          action: 'verified',
+        }
+      }
+
+      if (gitResult.kind === 'not_found') {
+        if (!dbData) {
+          return {
+            feature_id: featureId,
+            branch,
+            success: false,
+            action: 'failed',
+            error: 'Feature not found in Git or DB',
+          }
+        }
+
+        return await this.handleGitNotFoundFeature(dbData)
+      }
+
+      if (gitResult.kind !== 'snapshot') {
+        return {
+          feature_id: featureId,
+          branch,
+          success: false,
+          action: 'failed',
+          error: 'Unexpected git result state',
+        }
+      }
+
+      const gitData = gitResult.data
+
+      if (!dbData) {
         // New feature in Git, not yet in DB
         return await this.handleNewFeatureFromGit(gitData, repoOwner, repoName, featureId)
       }
 
-      // 4. Both exist - compare content
-      const comparison = this.compareFeatureData(gitData, dbData!)
+      // Both exist - compare content
+      const comparison = this.compareFeatureData(gitData, dbData)
 
-      // 5. Resolve conflict
-      return await this.resolveConflict(
-        comparison,
-        gitData,
-        dbData!,
-        repoOwner,
-        repoName,
-        featureId
-      )
+      // Resolve conflict
+      return await this.resolveConflict(comparison, gitData, dbData, repoOwner, repoName, featureId)
     } catch (error) {
       console.error(`[Validation] Error validating ${featureId}:`, error)
       return {
@@ -140,7 +195,7 @@ export class ValidationService {
     repoName: string,
     featureId: string
   ): Promise<ValidationResult> {
-    // Case 1: Content is identical → mark as verified
+    // Case 1: Content is identical -> mark as verified
     if (comparison.identical) {
       await markFeatureVerified(repoOwner, repoName, featureId, gitData.sha)
 
@@ -151,7 +206,7 @@ export class ValidationService {
       }
     }
 
-    // Case 2: Git is newer → update DB from Git
+    // Case 2: Git is newer -> update DB from Git
     if (comparison.gitIsNewer) {
       await this.updateFromGit(gitData, repoOwner, repoName, featureId)
 
@@ -162,37 +217,44 @@ export class ValidationService {
       }
     }
 
-    // Case 3: Agent push is newer → retry later (wait for Git push)
+    // Case 3: Agent write is newer -> retry briefly, then mark conflict
     if (comparison.agentIsNewer) {
-      // Check age of agent data
-      const ageMinutes = (Date.now() - dbData.updated_at) / 60000
+      const ageMs = Date.now() - dbData.updated_at
 
-      if (ageMinutes > 10) {
-        // Too old, likely stale - mark as such
+      if (ageMs <= GRACE_PERIOD_MS) {
         await upsertFeature({
           ...dbData,
-          source: 'agent_stale',
           verified: false,
+          sync_state: 'pending_verify',
+          last_git_checked_at: Date.now(),
+          last_sync_error: 'Agent data newer than Git, waiting for sync',
         })
 
         return {
           feature_id: featureId,
-          success: true,
+          success: false,
           action: 'retry',
-          error: 'Agent data is stale (>10 min old), marked as stale',
+          error: 'Agent push is newer than Git, will retry',
         }
       }
 
-      // Still fresh, retry later
+      await upsertFeature({
+        ...dbData,
+        verified: false,
+        sync_state: 'conflict',
+        last_git_checked_at: Date.now(),
+        last_sync_error: 'Conflict: DB data remained newer than Git after grace window',
+      })
+
       return {
         feature_id: featureId,
-        success: false,
+        success: true,
         action: 'retry',
-        error: 'Agent push is newer than Git, will retry',
+        error: 'Marked as conflict after grace window',
       }
     }
 
-    // Case 4: Default fallback → Git wins
+    // Case 4: Default fallback -> Git wins
     await this.updateFromGit(gitData, repoOwner, repoName, featureId)
 
     return {
@@ -203,13 +265,20 @@ export class ValidationService {
   }
 
   /**
-   * Handle feature that exists in DB but not in Git (orphaned)
+   * Handle feature that exists in DB but is not found in Git (404)
    */
-  private async handleOrphanedFeature(dbData: FeatureData): Promise<ValidationResult> {
-    const ageMinutes = (Date.now() - dbData.created_at) / 60000
+  private async handleGitNotFoundFeature(dbData: FeatureData): Promise<ValidationResult> {
+    const ageMs = Date.now() - dbData.created_at
 
-    if (ageMinutes < 10) {
-      // New feature, give it time to be pushed to Git
+    if (ageMs < GRACE_PERIOD_MS) {
+      await upsertFeature({
+        ...dbData,
+        verified: false,
+        sync_state: 'pending_verify',
+        last_git_checked_at: Date.now(),
+        last_sync_error: 'Feature not yet in Git, waiting for push',
+      })
+
       return {
         feature_id: dbData.id,
         success: false,
@@ -218,11 +287,13 @@ export class ValidationService {
       }
     }
 
-    // Old feature that was deleted from Git
     await upsertFeature({
       ...dbData,
       source: 'agent_orphaned',
       verified: false,
+      sync_state: 'git_missing',
+      last_git_checked_at: Date.now(),
+      last_sync_error: 'Feature deleted from Git, marked as orphaned',
     })
 
     return {
@@ -262,25 +333,30 @@ export class ValidationService {
   ): Promise<void> {
     // Parse meta.yaml to extract metadata
     const metaParsed = this.parseMetaYaml(gitData.meta_yaml || '')
+    const normalizedStatus = this.normalizeStatus(metaParsed.status)
 
     await upsertFeature({
       id: featureId,
       repo_owner: repoOwner,
       repo_name: repoName,
       title: metaParsed.title || featureId,
-      status: metaParsed.status || 'todo',
+      status: normalizedStatus,
       owner: metaParsed.owner,
       priority: metaParsed.priority,
       progress: metaParsed.progress || 0,
-      meta_yaml: gitData.meta_yaml || null,
-      dev_design_md: gitData.dev_design_md || null,
-      dev_plan_md: gitData.dev_plan_md || null,
-      prd_md: gitData.prd_md || null,
+      meta_yaml: gitData.meta_yaml || undefined,
+      dev_design_md: gitData.dev_design_md || undefined,
+      dev_plan_md: gitData.dev_plan_md || undefined,
+      prd_md: gitData.prd_md || undefined,
       source: 'git',
       verified: true,
       git_sha: gitData.sha,
       git_etag: gitData.etag,
-      created_at: Date.now(), // Will be ignored if already exists
+      sync_state: 'synced',
+      last_git_checked_at: Date.now(),
+      last_git_commit_at: gitData.updated_at,
+      last_sync_error: undefined,
+      created_at: Date.now(), // ignored on conflict update
       updated_at: gitData.updated_at,
       verified_at: Date.now(),
     })
@@ -341,6 +417,14 @@ export class ValidationService {
 
     return result
   }
+
+  private normalizeStatus(status?: string): 'todo' | 'doing' | 'ready-to-ship' | 'shipped' {
+    if (status === 'todo' || status === 'doing' || status === 'ready-to-ship' || status === 'shipped') {
+      return status
+    }
+
+    return 'todo'
+  }
 }
 
 // ============================================================================
@@ -367,7 +451,7 @@ export async function processValidationQueue(
   const jobs = await getValidationQueue(batchSize)
 
   // Process in parallel
-  const results = await Promise.allSettled(
+  await Promise.allSettled(
     jobs.map(async (job: any) => {
       const result = await validator.validateFeature(
         job.repo_owner,

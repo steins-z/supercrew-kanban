@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { boardRouter } from './routes/board.js'
+import { featuresRouter } from './routes/features.js'
+import { adminRouter } from './routes/admin.js'
 
 // Environment variables
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID ?? ''
@@ -75,6 +77,8 @@ app.get('/health', (c) => c.json({ ok: true }))
 
 // ─── API Routes ───────────────────────────────────────────────────────────
 app.route('/api/board', boardRouter)
+app.route('/api/features', featuresRouter)
+app.route('/api/admin', adminRouter)
 
 // Bun serves when it sees default export with { port, fetch }
 export default {

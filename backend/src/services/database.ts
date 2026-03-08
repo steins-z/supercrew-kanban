@@ -42,6 +42,11 @@ export interface FeatureData {
   verified: boolean
   git_sha?: string
   git_etag?: string
+  sync_state?: 'synced' | 'pending_verify' | 'conflict' | 'git_missing' | 'error'
+  last_git_checked_at?: number
+  last_git_commit_at?: number
+  last_db_write_at?: number
+  last_sync_error?: string
   created_at: number
   updated_at: number
   verified_at?: number
@@ -75,6 +80,8 @@ export interface ApiKeyData {
   created_by?: string
   created_at: number
   expires_at?: number
+  revoked?: boolean
+  last_used_at?: number
   description?: string
 }
 
@@ -124,8 +131,10 @@ export async function upsertFeature(data: FeatureData): Promise<void> {
     sql: `INSERT INTO features (
       id, repo_owner, repo_name, title, status, owner, priority, progress,
       meta_yaml, dev_design_md, dev_plan_md, prd_md,
-      source, verified, git_sha, git_etag, created_at, updated_at, verified_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      source, verified, git_sha, git_etag, sync_state,
+      last_git_checked_at, last_git_commit_at, last_db_write_at, last_sync_error,
+      created_at, updated_at, verified_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(repo_owner, repo_name, id) DO UPDATE SET
       title = excluded.title,
       status = excluded.status,
@@ -140,6 +149,11 @@ export async function upsertFeature(data: FeatureData): Promise<void> {
       verified = excluded.verified,
       git_sha = excluded.git_sha,
       git_etag = excluded.git_etag,
+      sync_state = excluded.sync_state,
+      last_git_checked_at = excluded.last_git_checked_at,
+      last_git_commit_at = excluded.last_git_commit_at,
+      last_db_write_at = excluded.last_db_write_at,
+      last_sync_error = excluded.last_sync_error,
       updated_at = excluded.updated_at,
       verified_at = excluded.verified_at`,
     args: [
@@ -159,6 +173,11 @@ export async function upsertFeature(data: FeatureData): Promise<void> {
       data.verified ? 1 : 0,
       data.git_sha || null,
       data.git_etag || null,
+      data.sync_state || null,
+      data.last_git_checked_at || null,
+      data.last_git_commit_at || null,
+      data.last_db_write_at || null,
+      data.last_sync_error || null,
       data.created_at,
       data.updated_at,
       data.verified_at || null,
@@ -177,9 +196,10 @@ export async function markFeatureVerified(
 ): Promise<void> {
   await db.execute({
     sql: `UPDATE features
-          SET verified = 1, verified_at = ?, git_sha = ?
+          SET verified = 1, verified_at = ?, git_sha = ?,
+              sync_state = 'synced', last_git_checked_at = ?, last_sync_error = NULL
           WHERE repo_owner = ? AND repo_name = ? AND id = ?`,
-    args: [Date.now(), gitSha || null, repoOwner, repoName, featureId],
+    args: [Date.now(), gitSha || null, Date.now(), repoOwner, repoName, featureId],
   })
 }
 
