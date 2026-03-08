@@ -28,12 +28,32 @@ export async function dailyReconcile(
   repoName: string,
   githubToken: string
 ): Promise<ReconcileStats> {
-  // TODO: Implement
-  return {
+  console.log(`[Reconcile] Starting daily reconcile for ${repoOwner}/${repoName}`)
+
+  const stats: ReconcileStats = {
     scanned: 0,
     inserted: 0,
     updated: 0,
     orphaned: 0,
     errors: 0,
+  }
+
+  try {
+    // Step 1: Scan Git (source of truth)
+    const scanner = new BranchScanner(githubToken, repoOwner, repoName)
+    const branches = await scanner.discoverBranches('user/*')
+
+    console.log(`[Reconcile] Discovered ${branches.length} branches`)
+
+    const gitSnapshots = await scanner.fetchAllFeatures(branches)
+    console.log(`[Reconcile] Fetched ${gitSnapshots.length} feature snapshots`)
+
+    stats.scanned = gitSnapshots.length
+
+    // TODO: Build feature map and sync
+    return stats
+  } catch (error) {
+    console.error('[Reconcile] Error during reconcile:', error)
+    throw error
   }
 }
