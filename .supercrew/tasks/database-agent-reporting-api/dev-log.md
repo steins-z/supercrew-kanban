@@ -168,5 +168,36 @@ Ready to begin implementation. Use `/supercrew:sync` to update progress as tasks
 
 **Status**: ✅ All implementation tasks complete! Ready for Phase 7 (Deployment & Migration)
 
+---
 
+## 2026-03-08 — Ready to Ship
+
+- **Status changed**: `doing` → `ready-to-ship`
+- **Implementation complete**: Git-DB auto-refresh via Vercel Cron
+- **Pull Request**: [#8](https://github.com/steins-z/supercrew-kanban/pull/8)
+
+### What Was Implemented
+
+**Core Features:**
+- Multi-source authentication (Bearer header + env var)
+- Vercel Cron configuration (every 2 minutes)
+- Health check endpoint (`/api/board/sync/status`)
+- Comprehensive test coverage (all tests passing)
+
+**Key Changes:**
+- `backend/src/routes/board.ts` — Multi-source token auth + health endpoint
+- `vercel.json` — 2-minute cron configuration
+- `backend/tests/sync-status.test.ts` — Health endpoint tests
+- Design and implementation documentation
+
+**Impact:**
+- Max staleness reduced: 24 hours → 2 minutes
+- Cron frequency: 720 executions/day
+- GitHub API usage: ~9% of quota
+
+### Next Steps
+
+1. Merge PR #8
+2. Configure `GITHUB_TOKEN` in Vercel
+3. Monitor production deployment
 
