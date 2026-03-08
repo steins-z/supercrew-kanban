@@ -167,7 +167,29 @@ export async function dailyReconcile(
 
     console.log(`[Reconcile] Synced: ${stats.inserted} inserted, ${stats.updated} updated`)
 
-    // TODO: Mark orphaned features
+    // Step 5: Mark DB-only features as orphaned
+    for (const dbFeature of dbFeatures) {
+      if (!gitFeatures.has(dbFeature.id)) {
+        try {
+          await upsertFeature({
+            ...dbFeature,
+            source: 'agent_orphaned',
+            sync_state: 'git_missing',
+            verified: false,
+            last_sync_error: 'Feature not found in Git during daily reconcile',
+            updated_at: Date.now(),
+          })
+          stats.orphaned++
+        } catch (error) {
+          console.error(`[Reconcile] Error marking ${dbFeature.id} as orphaned:`, error)
+          stats.errors++
+        }
+      }
+    }
+
+    console.log(`[Reconcile] Marked ${stats.orphaned} features as orphaned`)
+    console.log(`[Reconcile] Complete:`, stats)
+
     return stats
   } catch (error) {
     console.error('[Reconcile] Error during reconcile:', error)
