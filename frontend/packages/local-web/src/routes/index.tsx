@@ -6,7 +6,6 @@ import SpotlightCard from '@web/components/SpotlightCard'
 import CountUp from '@web/components/CountUp'
 import ClickSpark from '@web/components/ClickSpark'
 import AnimatedCard from '@web/components/AnimatedCard'
-import { BoardMetadataBanner } from '@web/components/BoardMetadataBanner'
 
 // ─── Column config ──────────────────────────────────────────────────────────
 
@@ -33,7 +32,7 @@ const PRI_CLASS: Record<FeaturePriority, string> = {
 
 function BoardPage() {
   const { t } = useTranslation()
-  const { featuresByStatus, isLoading, metadata, refresh, lastRefresh } = useBoard({ mode: 'database' })
+  const { featuresByStatus, isLoading } = useBoard({ mode: 'database' })
   const navigate = useNavigate()
 
   const STATUS_COLUMNS = STATUS_COLUMN_IDS.map(id => ({
@@ -58,14 +57,6 @@ function BoardPage() {
 
   return (
     <div className="rb-page" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-
-      {/* ── Metadata Banner ── */}
-      {metadata && (
-        <BoardMetadataBanner
-          metadata={metadata}
-          onRefresh={refresh}
-        />
-      )}
 
       {/* ── Kanban board with ClickSpark ── */}
       <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', padding: '16px 18px' }}>
