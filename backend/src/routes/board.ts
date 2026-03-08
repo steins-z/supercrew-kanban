@@ -473,6 +473,37 @@ boardRouter.get('/branches', async (c) => {
   }
 })
 
+// Health check: database sync status
+boardRouter.get('/sync/status', async (c) => {
+  try {
+    const { db } = await import('../services/database.js')
+
+    // Get last sync time from most recent feature update
+    const lastSyncResult = await db.execute({
+      sql: `SELECT MAX(updated_at) as last_sync FROM features`,
+      args: [],
+    })
+    const lastSync = (lastSyncResult.rows[0] as { last_sync: string | null })?.last_sync
+
+    // Get feature count
+    const countResult = await db.execute({
+      sql: `SELECT COUNT(*) as count FROM features`,
+      args: [],
+    })
+    const count = (countResult.rows[0] as { count: number })?.count || 0
+
+    return c.json({
+      source: 'database',
+      lastSync: lastSync,
+      featureCount: count,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error('Sync status error:', error)
+    return c.json({ error: 'Failed to fetch sync status' }, 500)
+  }
+})
+
 boardRouter.get('/multi-branch', async (c) => {
   // ─── Extract Parameters ────────────────────────────────────────────
 
