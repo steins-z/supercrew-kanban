@@ -476,13 +476,17 @@ boardRouter.get('/branches', async (c) => {
 boardRouter.get('/multi-branch', async (c) => {
   // ─── Extract Parameters ────────────────────────────────────────────
 
-  const token = c.req.header('Authorization')?.replace('Bearer ', '')
+  // Priority: 1. Bearer token (user request), 2. Environment variable (cron/local dev), 3. Fail
+  const token =
+    (c.req.header('Authorization')?.replace('Bearer ', '') || '').trim() ||
+    process.env.GITHUB_TOKEN
+
   const owner = c.req.header('X-Repo-Owner')
   const repo = c.req.header('X-Repo-Name')
   const branchPattern = c.req.query('branch_pattern') ?? 'feature/*'
 
   if (!token) {
-    return c.json({ error: 'Missing Authorization header' }, 401)
+    return c.json({ error: 'Missing Authorization header or GITHUB_TOKEN environment variable' }, 401)
   }
 
   if (!owner || !repo) {
