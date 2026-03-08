@@ -48,6 +48,16 @@ function parseMetaYaml(content: string): {
   return result
 }
 
+/**
+ * Normalize status to valid enum
+ */
+function normalizeStatus(status?: string): 'todo' | 'doing' | 'ready-to-ship' | 'shipped' {
+  if (status === 'todo' || status === 'doing' || status === 'ready-to-ship' || status === 'shipped') {
+    return status
+  }
+  return 'todo'
+}
+
 export interface ReconcileStats {
   scanned: number
   inserted: number
@@ -108,7 +118,56 @@ export async function dailyReconcile(
     stats.scanned = gitFeatures.size
     console.log(`[Reconcile] Mapped ${gitFeatures.size} unique features`)
 
-    // TODO: Get DB features and sync
+    // Step 3: Get all DB features for this repo
+    const dbFeatures = await getFeatures(repoOwner, repoName)
+    const dbFeatureIds = new Set(dbFeatures.map(f => f.id))
+
+    console.log(`[Reconcile] Found ${dbFeatures.length} features in DB`)
+
+    // Step 4: Sync Git → DB (insert/update)
+    for (const [featureId, snapshot] of gitFeatures) {
+      try {
+        const metaParsed = parseMetaYaml(snapshot.files.meta || '')
+        const now = Date.now()
+
+        await upsertFeature({
+          id: featureId,
+          repo_owner: repoOwner,
+          repo_name: repoName,
+          title: metaParsed.title || featureId,
+          status: normalizeStatus(metaParsed.status),
+          owner: metaParsed.owner,
+          priority: metaParsed.priority,
+          progress: metaParsed.progress || 0,
+          meta_yaml: snapshot.files.meta || undefined,
+          dev_design_md: snapshot.files.design || undefined,
+          dev_plan_md: snapshot.files.plan || undefined,
+          prd_md: undefined, // TODO: Fetch prd.md if needed
+          source: 'git',
+          verified: true,
+          sync_state: 'synced',
+          last_git_checked_at: now,
+          last_git_commit_at: now,
+          last_sync_error: undefined,
+          created_at: now,
+          updated_at: now,
+          verified_at: now,
+        })
+
+        if (dbFeatureIds.has(featureId)) {
+          stats.updated++
+        } else {
+          stats.inserted++
+        }
+      } catch (error) {
+        console.error(`[Reconcile] Error syncing ${featureId}:`, error)
+        stats.errors++
+      }
+    }
+
+    console.log(`[Reconcile] Synced: ${stats.inserted} inserted, ${stats.updated} updated`)
+
+    // TODO: Mark orphaned features
     return stats
   } catch (error) {
     console.error('[Reconcile] Error during reconcile:', error)
