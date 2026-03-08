@@ -81,7 +81,18 @@ async function syncFeaturesToDatabase(
   // Parse and upsert each feature
   for (const [featureId, snapshot] of featureMap) {
     try {
-      const metaParsed = parseMetaYaml(snapshot.files.meta || '')
+      // Decode base64 content from GitHub API
+      const decodeBase64 = (b64: string | null): string => {
+        if (!b64) return ''
+        try {
+          return Buffer.from(b64, 'base64').toString('utf-8')
+        } catch {
+          return ''
+        }
+      }
+
+      const metaContent = decodeBase64(snapshot.files.meta)
+      const metaParsed = parseMetaYaml(metaContent)
       const now = Date.now()
 
       await upsertFeature({
@@ -93,9 +104,9 @@ async function syncFeaturesToDatabase(
         owner: metaParsed.owner,
         priority: metaParsed.priority,
         progress: metaParsed.progress || 0,
-        meta_yaml: snapshot.files.meta || undefined,
-        dev_design_md: snapshot.files.design || undefined,
-        dev_plan_md: snapshot.files.plan || undefined,
+        meta_yaml: metaContent || undefined,
+        dev_design_md: decodeBase64(snapshot.files.design) || undefined,
+        dev_plan_md: decodeBase64(snapshot.files.plan) || undefined,
         source: 'git',
         verified: true,
         sync_state: 'synced',
