@@ -28,11 +28,12 @@ CREATE TABLE IF NOT EXISTS features (
   prd_md TEXT,
 
   -- Verification state
-  source TEXT NOT NULL CHECK(source IN ('git', 'agent', 'agent_stale', 'agent_orphaned')),
+  source TEXT NOT NULL CHECK(source IN ('git', 'agent', 'agent_verified', 'agent_stale', 'agent_orphaned')),
   verified BOOLEAN DEFAULT 0,
   git_sha TEXT,
   git_etag TEXT,  -- for GitHub API conditional requests (If-None-Match)
-  sync_state TEXT CHECK(sync_state IN ('synced', 'pending_verify', 'conflict', 'git_missing', 'error')),
+  sync_state TEXT CHECK(sync_state IN ('local_only', 'pending_push', 'pending_verify', 'synced', 'conflict', 'error', 'git_missing')),
+  git_commit_sha TEXT,  -- SHA of the last Git commit that modified this feature's files
   last_git_checked_at INTEGER,
   last_git_commit_at INTEGER,
   last_db_write_at INTEGER,
@@ -194,7 +195,10 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 
 INSERT INTO schema_version (version, applied_at, description)
-VALUES (1, strftime('%s', 'now') * 1000, 'Initial schema: features, branches, validation_queue, api_keys');
+VALUES
+  (1, strftime('%s', 'now') * 1000, 'Initial schema: features, branches, validation_queue, api_keys'),
+  (2, strftime('%s', 'now') * 1000, 'Add git_commit_sha column and update sync_state/source constraints for local dev validation')
+ON CONFLICT(version) DO NOTHING;
 
 -- ============================================================================
 -- End of schema

@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS features (
   title TEXT NOT NULL,
   status TEXT NOT NULL CHECK(status IN ('todo', 'doing', 'ready-to-ship', 'shipped')),
   owner TEXT,
-  priority TEXT,
-  progress INTEGER DEFAULT 0,
+  priority TEXT CHECK(priority IN ('P0', 'P1', 'P2', 'P3')),
+  progress INTEGER DEFAULT 0 CHECK(progress >= 0 AND progress <= 100),
   source TEXT NOT NULL CHECK(source IN ('git', 'agent', 'agent_verified', 'agent_stale', 'agent_orphaned')),
   verified BOOLEAN DEFAULT 0,
   meta_yaml TEXT,
@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS features (
   prd_md TEXT,
   git_sha TEXT,
   git_etag TEXT,
-  sync_state TEXT CHECK(sync_state IN ('synced', 'pending_verify', 'conflict', 'git_missing', 'error')),
+  sync_state TEXT CHECK(sync_state IN ('local_only', 'pending_push', 'pending_verify', 'synced', 'conflict', 'error', 'git_missing')),
+  git_commit_sha TEXT,
   last_git_checked_at INTEGER,
   last_git_commit_at INTEGER,
   last_db_write_at INTEGER,
@@ -83,10 +84,18 @@ CREATE TABLE IF NOT EXISTS api_keys (
   description TEXT
 );
 
+-- Schema version tracking
+CREATE TABLE IF NOT EXISTS schema_version (
+  version INTEGER PRIMARY KEY,
+  applied_at INTEGER NOT NULL,
+  description TEXT
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_features_repo ON features(repo_owner, repo_name);
 CREATE INDEX IF NOT EXISTS idx_features_status ON features(status);
-CREATE INDEX IF NOT EXISTS idx_features_verified ON features(verified);
+CREATE INDEX IF NOT EXISTS idx_features_verified ON features(verified, updated_at);
+CREATE INDEX IF NOT EXISTS idx_features_source ON features(source);
 CREATE INDEX IF NOT EXISTS idx_branches_repo ON branches(repo_owner, repo_name);
 CREATE INDEX IF NOT EXISTS idx_validation_priority ON validation_queue(priority DESC, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_api_keys_repo ON api_keys(repo_owner, repo_name);
@@ -112,6 +121,14 @@ try {
   for (const row of result.rows) {
     console.log(`  - ${row.name}`)
   }
+
+  // Initialize schema version
+  await db.execute(
+    `INSERT OR IGNORE INTO schema_version (version, applied_at, description)
+     VALUES (2, strftime('%s', 'now') * 1000, 'Initial schema with git commit tracking support')`
+  )
+
+  console.log('\n✅ Schema initialized to version 2')
 
 } catch (error) {
   console.error('❌ Error applying schema:', error)

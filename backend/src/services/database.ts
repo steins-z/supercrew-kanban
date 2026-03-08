@@ -155,10 +155,10 @@ export async function upsertFeature(data: FeatureData): Promise<void> {
     sql: `INSERT INTO features (
       id, repo_owner, repo_name, title, status, owner, priority, progress,
       meta_yaml, dev_design_md, dev_plan_md, prd_md,
-      source, verified, git_sha, git_etag, sync_state,
+      source, verified, git_sha, git_etag, sync_state, git_commit_sha,
       last_git_checked_at, last_git_commit_at, last_db_write_at, last_sync_error,
       created_at, updated_at, verified_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(repo_owner, repo_name, id) DO UPDATE SET
       title = excluded.title,
       status = excluded.status,
@@ -174,6 +174,7 @@ export async function upsertFeature(data: FeatureData): Promise<void> {
       git_sha = excluded.git_sha,
       git_etag = excluded.git_etag,
       sync_state = excluded.sync_state,
+      git_commit_sha = excluded.git_commit_sha,
       last_git_checked_at = excluded.last_git_checked_at,
       last_git_commit_at = excluded.last_git_commit_at,
       last_db_write_at = excluded.last_db_write_at,
@@ -198,6 +199,7 @@ export async function upsertFeature(data: FeatureData): Promise<void> {
       data.git_sha || null,
       data.git_etag || null,
       data.sync_state || null,
+      data.git_commit_sha || null,
       data.last_git_checked_at || null,
       data.last_git_commit_at || null,
       data.last_db_write_at || null,
