@@ -195,9 +195,21 @@ export class ValidationService {
     repoName: string,
     featureId: string
   ): Promise<ValidationResult> {
-    // Case 1: Content is identical -> mark as verified
+    // Case 1: Content is identical -> mark as agent_verified
     if (comparison.identical) {
-      await markFeatureVerified(repoOwner, repoName, featureId, gitData.sha)
+      // Determine source: If current source is 'agent', upgrade to 'agent_verified'
+      const newSource = dbData.source === 'agent' ? 'agent_verified' : dbData.source
+
+      await upsertFeature({
+        ...dbData,
+        source: newSource,
+        verified: true,
+        sync_state: 'synced',
+        git_sha: gitData.sha,
+        git_etag: gitData.etag,
+        last_git_checked_at: Date.now(),
+        verified_at: Date.now(),
+      })
 
       return {
         feature_id: featureId,
