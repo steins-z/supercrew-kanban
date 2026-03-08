@@ -17,7 +17,7 @@ export interface UseBoardOptions {
 }
 
 export function useBoard(options: UseBoardOptions = {}) {
-  const { mode = 'database', enablePolling = true } = options
+  const { mode = 'git', enablePolling = true } = options
   const queryClient = useQueryClient()
   const { repo } = useRepo()
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
