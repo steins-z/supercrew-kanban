@@ -25,6 +25,9 @@ export interface FeatureReportRequest {
     dev_plan_md?: string
     prd_md?: string
   }
+
+  // New: Git metadata from Agent
+  git_metadata?: GitMetadata  // Optional for backward compatibility
 }
 
 /**
@@ -49,6 +52,7 @@ export interface BatchReportRequest {
     feature_id: string
     branch?: string
     data: FeatureReportRequest['data']
+    git_metadata?: GitMetadata
   }>
 }
 
@@ -63,6 +67,26 @@ export interface BatchReportResponse {
     error?: string
   }>
   queued_for_validation: number
+}
+
+/**
+ * Git metadata provided by Agent for smart validation
+ */
+export interface GitMetadata {
+  // Last commit SHA that modified meta.yaml
+  last_commit_sha: string
+
+  // Commit timestamp (Unix seconds)
+  last_commit_timestamp: number
+
+  // Whether branch has remote tracking configured
+  has_upstream: boolean
+
+  // Whether branch exists on remote
+  branch_exists_on_remote: boolean
+
+  // How many commits ahead of remote (null if no upstream)
+  commits_ahead?: number | null
 }
 
 // ============================================================================
