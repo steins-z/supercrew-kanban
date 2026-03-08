@@ -473,29 +473,26 @@ boardRouter.get('/branches', async (c) => {
   }
 })
 
-// Health check: database sync status
+// Sync status metadata endpoint
 boardRouter.get('/sync/status', async (c) => {
   try {
     const { db } = await import('../services/database.js')
 
-    // Get last sync time from most recent feature update
-    const lastSyncResult = await db.execute({
-      sql: `SELECT MAX(updated_at) as last_sync FROM features`,
+    // Get sync metadata
+    const result = await db.execute({
+      sql: `SELECT
+        MAX(updated_at) as last_sync,
+        COUNT(*) as count
+      FROM features`,
       args: [],
     })
-    const lastSync = (lastSyncResult.rows[0] as { last_sync: string | null })?.last_sync
 
-    // Get feature count
-    const countResult = await db.execute({
-      sql: `SELECT COUNT(*) as count FROM features`,
-      args: [],
-    })
-    const count = (countResult.rows[0] as { count: number })?.count || 0
+    const row = result.rows[0] as { last_sync: string | null; count: number } | undefined
 
     return c.json({
       source: 'database',
-      lastSync: lastSync,
-      featureCount: count,
+      lastSync: row?.last_sync ?? null,
+      featureCount: row?.count ?? 0,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
