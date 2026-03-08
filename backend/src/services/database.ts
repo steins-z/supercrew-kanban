@@ -38,7 +38,7 @@ export interface FeatureData {
   dev_design_md?: string
   dev_plan_md?: string
   prd_md?: string
-  source: 'git' | 'agent' | 'agent_stale' | 'agent_orphaned'
+  source: 'git' | 'agent' | 'agent_verified' | 'agent_stale' | 'agent_orphaned'
   verified: boolean
   git_sha?: string
   git_etag?: string
