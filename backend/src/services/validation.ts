@@ -299,6 +299,28 @@ export class ValidationService {
    * Handle feature that exists in DB but is not found in Git (404)
    */
   private async handleGitNotFoundFeature(dbData: FeatureData): Promise<ValidationResult> {
+    // Check if branch has unpushed commits (pending push)
+    if (dbData.commits_ahead && dbData.commits_ahead > 0) {
+      // Has unpushed commits - mark as pending_push
+      console.log(`[Validation] Branch ${dbData.branch} not on remote yet (${dbData.commits_ahead} commits ahead)`)
+
+      await upsertFeature({
+        ...dbData,
+        sync_state: 'pending_push',
+        source: 'agent',           // Keep as agent source
+        verified: false,
+        last_git_checked_at: Date.now(),
+        last_sync_error: undefined,
+      })
+
+      return {
+        feature_id: dbData.id,
+        success: true,
+        action: 'pending_push',
+      }
+    }
+
+    // No unpushed commits - check if recently created (grace period)
     const ageMs = Date.now() - dbData.created_at
 
     if (ageMs < GRACE_PERIOD_MS) {
@@ -317,6 +339,9 @@ export class ValidationService {
         error: 'Feature not yet in Git, waiting for push',
       }
     }
+
+    // Branch was deleted (no unpushed commits and old enough)
+    console.log(`[Validation] Branch ${dbData.branch} deleted on remote`)
 
     await upsertFeature({
       ...dbData,
