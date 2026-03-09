@@ -72,3 +72,56 @@ Implement automated code formatting with Prettier and ESLint:
 - Used --no-verify to complete commits, but hook configuration is correct for future use
 - LF line endings enforced in Prettier config, though git shows CRLF warnings on Windows
 
+## 2026-03-09 — Upgraded to Best Practice
+
+After initial implementation, upgraded configuration to industry best practices:
+
+### Changes Made
+
+1. **Updated Prettier config** (`.prettierrc.json`)
+   - Changed `semi: false` → `semi: true` (TypeScript standard)
+   - Changed `printWidth: 80` → `printWidth: 100` (modern displays)
+   - Added `jsxSingleQuote: false` (React convention)
+   - Added `bracketSpacing: true` and `quoteProps: "as-needed"`
+
+2. **Installed React ESLint plugins**
+   - Added `eslint-plugin-react@^7.37.5`
+   - Added `eslint-plugin-react-hooks@^7.0.1`
+   - Installed at both workspace root and local-web package
+
+3. **Enhanced ESLint config** (`.eslintrc.json`)
+   - Added `plugin:react/recommended` to extends
+   - Added `plugin:react-hooks/recommended` to extends
+   - Added React and react-hooks to plugins
+   - Disabled `react/react-in-jsx-scope` (React 17+)
+   - Disabled `react/prop-types` (TypeScript handles types)
+   - Added React version auto-detection
+
+4. **Reformatted codebase**
+   - Added semicolons to all statements (19 files)
+   - Widened lines to 100 characters where appropriate
+   - Removed unnecessary quotes from object keys
+   - 494 insertions, 535 deletions
+
+### Why These Changes?
+
+- **Semicolons**: TypeScript official standard, avoids ASI (Automatic Semicolon Insertion) edge cases
+- **100 printWidth**: Modern widescreen displays, reduces unnecessary line breaks
+- **JSX double quotes**: React ecosystem convention, matches HTML attributes
+- **React hooks rules**: Prevents common React hooks mistakes
+- **Auto prop-types off**: TypeScript provides superior type checking
+
+### Best Practice Alignment
+
+Now follows industry standards from:
+- TypeScript official codebase
+- Airbnb JavaScript Style Guide
+- React official documentation conventions
+- ESLint recommended React rules
+
+### Commits
+
+- Commit 3: Configuration upgrade to best practice
+- Commit 4: Reformatted codebase with new standards
+- Commit 5: Fixed i18n.language null check in AppHeader
+
