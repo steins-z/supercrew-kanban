@@ -211,6 +211,8 @@ function Column({
           borderTop: 'none',
           borderRadius: '0 0 10px 10px',
           minHeight: 120,
+          maxHeight: 'calc(100vh - 220px)', // Leave room for header and dock
+          overflowY: 'auto',
           padding: 7,
         }}
       >
