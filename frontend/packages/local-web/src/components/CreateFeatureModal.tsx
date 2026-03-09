@@ -133,9 +133,9 @@ export default function CreateFeatureModal({
         style={{
           background: 'hsl(var(--_bg-primary-default))',
           border: '1px solid hsl(var(--_border))',
-          borderRadius: 16,
-          width: 600,
-          maxHeight: '90vh',
+          borderRadius: 12,
+          width: 520,
+          maxHeight: '82vh',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 16px 48px rgba(0, 0, 0, 0.24)',
@@ -147,14 +147,14 @@ export default function CreateFeatureModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 20px',
+            padding: '12px 16px',
             borderBottom: '1px solid hsl(var(--_border))',
           }}
         >
           <h2
             style={{
               margin: 0,
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: 600,
               color: 'hsl(var(--text-high))',
               fontFamily: 'Instrument Sans, sans-serif',
@@ -193,17 +193,17 @@ export default function CreateFeatureModal({
         </div>
 
         {/* Body - Scrollable */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px' }}>
           {error && (
             <div
               style={{
-                padding: '12px',
+                padding: '10px 12px',
                 background: 'hsl(var(--destructive) / 0.1)',
                 border: '1px solid hsl(var(--destructive))',
-                borderRadius: 8,
+                borderRadius: 6,
                 color: 'hsl(var(--destructive))',
-                marginBottom: 16,
-                fontSize: 13,
+                marginBottom: 12,
+                fontSize: 12,
               }}
             >
               {error}
@@ -273,9 +273,9 @@ export default function CreateFeatureModal({
           <textarea
             value={background}
             onChange={(e) => setBackground(e.target.value)}
-            placeholder="Why is this feature needed? What problem does it solve?"
+            placeholder="Why is this feature needed?"
             style={textareaStyle}
-            rows={4}
+            rows={2}
             disabled={loading}
           />
 
@@ -286,9 +286,9 @@ export default function CreateFeatureModal({
           <textarea
             value={requirements}
             onChange={(e) => setRequirements(e.target.value)}
-            placeholder="What must this feature do? List functional requirements."
+            placeholder="What must this feature do?"
             style={textareaStyle}
-            rows={4}
+            rows={2}
             disabled={loading}
           />
 
@@ -297,9 +297,9 @@ export default function CreateFeatureModal({
           <textarea
             value={outOfScope}
             onChange={(e) => setOutOfScope(e.target.value)}
-            placeholder="What is explicitly NOT included?"
+            placeholder="What is NOT included?"
             style={textareaStyle}
-            rows={3}
+            rows={2}
             disabled={loading}
           />
         </div>
@@ -310,7 +310,7 @@ export default function CreateFeatureModal({
             display: 'flex',
             gap: 8,
             justifyContent: 'flex-end',
-            padding: '16px 20px',
+            padding: '12px 16px',
             borderTop: '1px solid hsl(var(--_border))',
           }}
         >
@@ -349,9 +349,9 @@ export default function CreateFeatureModal({
 // Styles
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  marginBottom: 6,
-  marginTop: 16,
-  fontSize: 13,
+  marginBottom: 5,
+  marginTop: 10,
+  fontSize: 12,
   fontWeight: 500,
   color: 'hsl(var(--text-high))',
   fontFamily: 'Instrument Sans, sans-serif',
@@ -359,12 +359,12 @@ const labelStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '8px 12px',
+  padding: '7px 10px',
   background: 'hsl(var(--_bg-secondary-default))',
   border: '1px solid hsl(var(--_border))',
-  borderRadius: 8,
+  borderRadius: 6,
   color: 'hsl(var(--text-high))',
-  fontSize: 13,
+  fontSize: 12,
   fontFamily: 'Instrument Sans, sans-serif',
   outline: 'none',
 };
@@ -377,20 +377,20 @@ const selectStyle: React.CSSProperties = {
 const textareaStyle: React.CSSProperties = {
   ...inputStyle,
   resize: 'vertical' as const,
-  minHeight: 80,
+  minHeight: 60,
 };
 
 const hintStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 10,
   color: 'hsl(var(--text-low))',
-  marginTop: 4,
+  marginTop: 3,
   fontFamily: 'Instrument Sans, sans-serif',
 };
 
 const buttonStyle: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 8,
-  fontSize: 13,
+  padding: '7px 14px',
+  borderRadius: 6,
+  fontSize: 12,
   fontWeight: 500,
   fontFamily: 'Instrument Sans, sans-serif',
   cursor: 'pointer',
