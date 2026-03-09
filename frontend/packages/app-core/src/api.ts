@@ -1,6 +1,13 @@
 // GitHub API client for reading .supercrew/tasks/
 
-import type { FeatureMeta, FeatureBoard, Feature, DesignDoc, PlanDoc, SupercrewStatus } from './types.js'
+import type {
+  FeatureMeta,
+  FeatureBoard,
+  Feature,
+  DesignDoc,
+  PlanDoc,
+  SupercrewStatus,
+} from './types.js'
 import { getAccessToken, clearToken } from './auth.js'
 
 const GH_API = 'https://api.github.com'
@@ -30,7 +37,10 @@ function decodeContent(b64: string): string {
 }
 
 // Parse YAML frontmatter from markdown
-function parseFrontmatter(content: string): { data: Record<string, any>; body: string } {
+function parseFrontmatter(content: string): {
+  data: Record<string, any>
+  body: string
+} {
   const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
   if (!match) return { data: {}, body: content }
 
@@ -47,10 +57,17 @@ function parseFrontmatter(content: string): { data: Record<string, any>; body: s
 
     // Handle arrays
     if (value.startsWith('[') && value.endsWith(']')) {
-      value = value.slice(1, -1).split(',').map((s: string) => s.trim().replace(/['"]/g, '')).filter(Boolean)
+      value = value
+        .slice(1, -1)
+        .split(',')
+        .map((s: string) => s.trim().replace(/['"]/g, ''))
+        .filter(Boolean)
     }
     // Handle quoted strings
-    else if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    else if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       value = value.slice(1, -1)
     }
     // Handle numbers
@@ -104,13 +121,20 @@ function parseYaml(content: string): Record<string, any> {
 
     // Inline array
     if (value.startsWith('[') && value.endsWith(']')) {
-      data[key] = value.slice(1, -1).split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean)
+      data[key] = value
+        .slice(1, -1)
+        .split(',')
+        .map((s) => s.trim().replace(/['"]/g, ''))
+        .filter(Boolean)
       continue
     }
 
     // Regular value
     let parsed: any = value
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       parsed = value.slice(1, -1)
     } else if (!isNaN(Number(value)) && value !== '') {
       parsed = Number(value)
@@ -172,13 +196,18 @@ export interface GitHubRepo {
 
 export async function fetchUserRepos(): Promise<GitHubRepo[]> {
   const repos = await ghFetch<GitHubRepo[]>(
-    '/user/repos?sort=updated&per_page=100&affiliation=owner,collaborator,organization_member'
+    '/user/repos?sort=updated&per_page=100&affiliation=owner,collaborator,organization_member',
   )
   return repos ?? []
 }
 
-export async function checkSupercrewExists(owner: string, repo: string): Promise<boolean> {
-  const result = await ghFetch<any>(`/repos/${owner}/${repo}/contents/${FEATURES_PATH}`)
+export async function checkSupercrewExists(
+  owner: string,
+  repo: string,
+): Promise<boolean> {
+  const result = await ghFetch<any>(
+    `/repos/${owner}/${repo}/contents/${FEATURES_PATH}`,
+  )
   return result !== null
 }
 
@@ -189,13 +218,13 @@ export async function fetchFeatures(): Promise<FeatureMeta[]> {
   if (!repo) return []
 
   const dirs = await ghFetch<{ name: string; type: string }[]>(
-    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}`
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}`,
   )
   if (!dirs) return []
 
-  const featureDirs = dirs.filter(d => d.type === 'dir')
+  const featureDirs = dirs.filter((d) => d.type === 'dir')
   const metas = await Promise.all(
-    featureDirs.map(d => fetchFeatureMeta(d.name))
+    featureDirs.map((d) => fetchFeatureMeta(d.name)),
   )
   return metas.filter(Boolean) as FeatureMeta[]
 }
@@ -205,7 +234,7 @@ async function fetchFeatureMeta(id: string): Promise<FeatureMeta | null> {
   if (!repo) return null
 
   const file = await ghFetch<{ content: string }>(
-    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/meta.yaml`
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/meta.yaml`,
   )
   if (!file) return null
 
@@ -241,12 +270,14 @@ export async function fetchFeature(id: string): Promise<Feature | null> {
   }
 }
 
-export async function fetchFeatureDesign(id: string): Promise<DesignDoc | null> {
+export async function fetchFeatureDesign(
+  id: string,
+): Promise<DesignDoc | null> {
   const repo = getSelectedRepo()
   if (!repo) return null
 
   const file = await ghFetch<{ content: string }>(
-    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/dev-design.md`
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/dev-design.md`,
   )
   if (!file) return null
 
@@ -259,12 +290,14 @@ export async function fetchFeatureDesign(id: string): Promise<DesignDoc | null> 
   }
 }
 
-export async function fetchFeaturePrd(id: string): Promise<{ body: string } | null> {
+export async function fetchFeaturePrd(
+  id: string,
+): Promise<{ body: string } | null> {
   const repo = getSelectedRepo()
   if (!repo) return null
 
   const file = await ghFetch<{ content: string }>(
-    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/prd.md`
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/prd.md`,
   )
   if (!file) return null
 
@@ -277,7 +310,7 @@ export async function fetchFeaturePlan(id: string): Promise<PlanDoc | null> {
   if (!repo) return null
 
   const file = await ghFetch<{ content: string }>(
-    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/dev-plan.md`
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/dev-plan.md`,
   )
   if (!file) return null
 
@@ -301,7 +334,8 @@ export async function fetchBoard(): Promise<FeatureBoard> {
 
   for (const f of features) {
     // Map unknown statuses to 'shipped' as fallback
-    const status = featuresByStatus[f.status] !== undefined ? f.status : 'shipped'
+    const status =
+      featuresByStatus[f.status] !== undefined ? f.status : 'shipped'
     featuresByStatus[status].push(f)
   }
 
@@ -316,7 +350,10 @@ export async function fetchBoardMultiBranch(): Promise<FeatureBoard> {
     return {
       features: [],
       featuresByStatus: {
-        todo: [], doing: [], 'ready-to-ship': [], shipped: [],
+        todo: [],
+        doing: [],
+        'ready-to-ship': [],
+        shipped: [],
       },
     }
   }
@@ -325,10 +362,11 @@ export async function fetchBoardMultiBranch(): Promise<FeatureBoard> {
   if (!token) throw new Error('Not authenticated')
 
   // Call backend API
-  const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3001'
+  const backendUrl =
+    (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3001'
   const res = await fetch(`${backendUrl}/api/board/multi-branch`, {
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'X-Repo-Owner': repo.owner,
       'X-Repo-Name': repo.repo,
     },

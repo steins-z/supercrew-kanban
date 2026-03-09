@@ -57,7 +57,10 @@ export async function verifyToken(): Promise<boolean> {
 
   try {
     const res = await fetch('https://api.github.com/user', {
-      headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'supercrew-kanban' },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'User-Agent': 'supercrew-kanban',
+      },
     })
     return res.ok
   } catch {

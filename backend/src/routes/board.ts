@@ -21,9 +21,12 @@ boardRouter.get('/multi-branch', async (c) => {
   }
 
   if (!owner || !repo) {
-    return c.json({
-      error: 'Missing required headers: X-Repo-Owner, X-Repo-Name'
-    }, 400)
+    return c.json(
+      {
+        error: 'Missing required headers: X-Repo-Owner, X-Repo-Name',
+      },
+      400,
+    )
   }
 
   // ─── Scan Branches ────────────────────────────────────────────────
@@ -64,7 +67,10 @@ boardRouter.get('/multi-branch', async (c) => {
 
     for (const feature of features) {
       // Map unknown statuses to fallback value
-      const status = featuresByStatus[feature.status] !== undefined ? feature.status : 'shipped'
+      const status =
+        featuresByStatus[feature.status] !== undefined
+          ? feature.status
+          : 'shipped'
       featuresByStatus[status].push(feature)
     }
 
@@ -82,13 +88,15 @@ boardRouter.get('/multi-branch', async (c) => {
     }
 
     return c.json(response)
-
   } catch (error) {
     console.error('[board/multi-branch] Error:', error)
 
-    return c.json({
-      error: error instanceof Error ? error.message : 'Unknown error',
-      details: error instanceof Error ? error.stack : undefined,
-    }, 500)
+    return c.json(
+      {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : undefined,
+      },
+      500,
+    )
   }
 })

@@ -1,5 +1,9 @@
 import { useSyncExternalStore, useCallback } from 'react'
-import { setSelectedRepoInternal, clearSelectedRepo, type RepoInfo } from '../api.js'
+import {
+  setSelectedRepoInternal,
+  clearSelectedRepo,
+  type RepoInfo,
+} from '../api.js'
 
 const REPO_KEY = 'kanban_repo'
 
@@ -12,7 +16,7 @@ function subscribe(callback: () => void) {
 }
 
 function notifyListeners() {
-  listeners.forEach(l => l())
+  listeners.forEach((l) => l())
 }
 
 // Cache for stable reference - only update when localStorage changes

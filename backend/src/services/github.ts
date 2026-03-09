@@ -13,12 +13,12 @@ export class GitHubClient {
   constructor(
     private token: string,
     private owner: string,
-    private repo: string
+    private repo: string,
   ) {
     this.headers = {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'User-Agent': 'supercrew-kanban',
-      'Accept': 'application/vnd.github.v3+json',
+      Accept: 'application/vnd.github.v3+json',
     }
   }
 
@@ -38,7 +38,7 @@ export class GitHubClient {
       if (waitMs > 0) {
         throw new Error(
           `GitHub API rate limit low (${this.rateLimitRemaining} remaining). ` +
-          `Resets in ${Math.ceil(waitMs / 1000)}s`
+            `Resets in ${Math.ceil(waitMs / 1000)}s`,
         )
       }
     }
@@ -83,15 +83,13 @@ export class GitHubClient {
     }
 
     const items: GitHubContent[] = await res.json()
-    return items
-      .filter(item => item.type === 'dir')
-      .map(item => item.name)
+    return items.filter((item) => item.type === 'dir').map((item) => item.name)
   }
 
   async getFileContent(
     featureId: string,
     filename: string,
-    branch: string
+    branch: string,
   ): Promise<string | null> {
     this.checkRateLimit()
 
@@ -102,10 +100,12 @@ export class GitHubClient {
 
     if (!res.ok) {
       if (res.status === 404) return null
-      throw new Error(`Failed to get ${filename} for ${featureId} on ${branch}: ${res.status}`)
+      throw new Error(
+        `Failed to get ${filename} for ${featureId} on ${branch}: ${res.status}`,
+      )
     }
 
     const data: GitHubContent = await res.json()
-    return data.content ?? null  // Base64 encoded
+    return data.content ?? null // Base64 encoded
   }
 }

@@ -11,11 +11,19 @@ const PORT = parseInt(process.env.PORT ?? '3001')
 
 export const app = new Hono()
 
-app.use('*', cors({
-  origin: [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'],
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'X-Repo-Owner', 'X-Repo-Name'],
-}))
+app.use(
+  '*',
+  cors({
+    origin: [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'],
+    allowMethods: ['GET', 'POST', 'OPTIONS'],
+    allowHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Repo-Owner',
+      'X-Repo-Name',
+    ],
+  }),
+)
 
 // Redirect to GitHub OAuth
 app.get('/auth/github', (c) => {
@@ -40,14 +48,14 @@ app.get('/auth/callback', async (c) => {
   // Exchange code for access_token
   const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
     method: 'POST',
-    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({
       client_id: GITHUB_CLIENT_ID,
       client_secret: GITHUB_CLIENT_SECRET,
       code,
     }),
   })
-  const { access_token, error } = await tokenRes.json() as any
+  const { access_token, error } = (await tokenRes.json()) as any
 
   if (error || !access_token) {
     return c.redirect(`${FRONTEND_URL}/login?error=token_failed`)
@@ -55,9 +63,12 @@ app.get('/auth/callback', async (c) => {
 
   // Get GitHub user info
   const userRes = await fetch('https://api.github.com/user', {
-    headers: { Authorization: `Bearer ${access_token}`, 'User-Agent': 'supercrew-kanban' },
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+      'User-Agent': 'supercrew-kanban',
+    },
   })
-  const ghUser = await userRes.json() as any
+  const ghUser = (await userRes.json()) as any
 
   // Return access_token and user info via URL params
   // Frontend will store these in localStorage

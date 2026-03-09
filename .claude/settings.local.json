@@ -14,7 +14,22 @@
       "Bash(git add -A)",
       "Bash(git commit -m \"Merge branch ''main'' into feature/multi-branch-kanban:*)",
       "Bash(git fetch:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(git checkout main)",
+      "Bash(git config user.name)",
+      "Bash(git checkout -b user/luna-chen/code-style-standards origin/main)",
+      "Bash(git checkout user/luna-chen/backlog-code-style-standards)",
+      "Bash(git checkout -b user/luna-chen/code-style-standards)",
+      "Bash(git checkout user/luna-chen/code-style-standards)",
+      "Bash(git checkout user/luna-chen/backlog-code-style-standards -- .supercrew/tasks/code-style-standards/meta.yaml .supercrew/tasks/code-style-standards/prd.md)",
+      "Bash(pnpm add -D -w prettier eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin)",
+      "Bash(pnpm add -D -w eslint@^8.57.0)",
+      "Bash(pnpm add -D eslint@^8.57.0)",
+      "Bash(pnpm add -D -w husky lint-staged)",
+      "Bash(pnpm exec husky init)",
+      "Bash(pnpm format)",
+      "Bash(git add .prettierrc.json .prettierignore .eslintrc.json .eslintignore .husky .vscode package.json .supercrew/tasks/code-style-standards/)",
+      "Bash(git commit:*)"
     ]
   }
 }

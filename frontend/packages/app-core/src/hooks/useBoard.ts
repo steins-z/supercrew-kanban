@@ -7,7 +7,10 @@ import type { FeatureBoard } from '../types.js'
 const EMPTY_BOARD: FeatureBoard = {
   features: [],
   featuresByStatus: {
-    todo: [], doing: [], 'ready-to-ship': [], shipped: [],
+    todo: [],
+    doing: [],
+    'ready-to-ship': [],
+    shipped: [],
   },
 }
 
@@ -22,7 +25,7 @@ export function useBoard() {
     queryKey,
     queryFn: fetchBoardMultiBranch,
     staleTime: 30_000,
-    enabled: !!repo,  // Don't fetch if no repo selected
+    enabled: !!repo, // Don't fetch if no repo selected
   })
 
   // Poll for data refresh every 30s

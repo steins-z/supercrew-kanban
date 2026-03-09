@@ -21,9 +21,9 @@ export interface FeatureMeta {
 // ─── Multi-Branch Extensions ──────────────────────────────────────────────
 
 export interface BranchInfo {
-  branch: string        // Branch name (e.g., "main", "feature/oauth")
-  filesHash: string     // MD5 hash of concatenated files
-  isDifferent: boolean  // Whether content differs from main branch
+  branch: string // Branch name (e.g., "main", "feature/oauth")
+  filesHash: string // MD5 hash of concatenated files
+  isDifferent: boolean // Whether content differs from main branch
   lastCommit?: {
     sha: string
     date: string
@@ -32,8 +32,8 @@ export interface BranchInfo {
 }
 
 export interface FeatureMetaWithBranches extends FeatureMeta {
-  branches: BranchInfo[]     // All branches containing this feature
-  primaryBranch: string      // Which branch to use as "source of truth"
+  branches: BranchInfo[] // All branches containing this feature
+  primaryBranch: string // Which branch to use as "source of truth"
 }
 
 // ─── API Response ─────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ export interface BranchError {
 export interface BoardMetadata {
   scannedBranches: string[]
   totalBranches: number
-  fetchedAt: string  // ISO timestamp
+  fetchedAt: string // ISO timestamp
   errors: BranchError[]
 }
 
@@ -63,14 +63,14 @@ export interface FileSnapshot {
   branch: string
   featureId: string
   files: {
-    meta: string | null     // Base64 encoded content
+    meta: string | null // Base64 encoded content
     design: string | null
     plan: string | null
   }
 }
 
 export interface GitHubRef {
-  ref: string  // e.g., "refs/heads/feature/oauth"
+  ref: string // e.g., "refs/heads/feature/oauth"
   object: {
     sha: string
     type: string
@@ -83,6 +83,6 @@ export interface GitHubContent {
   sha: string
   size: number
   type: 'file' | 'dir'
-  content?: string  // Base64 encoded
+  content?: string // Base64 encoded
   encoding?: string
 }

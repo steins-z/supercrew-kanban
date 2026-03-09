@@ -21,9 +21,7 @@ export class BranchScanner {
       const prefix = pattern.replace('/*', '')
       const refs = await this.gh.getRefs(`heads/${prefix}`)
 
-      branches.push(
-        ...refs.map(r => r.ref.replace('refs/heads/', ''))
-      )
+      branches.push(...refs.map((r) => r.ref.replace('refs/heads/', '')))
     } catch (error) {
       this.errors.push({
         branch: pattern,
@@ -47,7 +45,7 @@ export class BranchScanner {
 
     // Parallel fetch across branches using Promise.allSettled
     const results = await Promise.allSettled(
-      branches.map(branch => this.fetchBranchFeatures(branch))
+      branches.map((branch) => this.fetchBranchFeatures(branch)),
     )
 
     results.forEach((result, i) => {
@@ -58,9 +56,10 @@ export class BranchScanner {
       } else {
         this.errors.push({
           branch,
-          error: result.reason instanceof Error
-            ? result.reason.message
-            : String(result.reason),
+          error:
+            result.reason instanceof Error
+              ? result.reason.message
+              : String(result.reason),
           type: this.categorizeError(result.reason),
         })
       }
@@ -77,7 +76,7 @@ export class BranchScanner {
 
     // Parallel fetch files for each feature
     const featureResults = await Promise.allSettled(
-      featureDirs.map(featureId => this.fetchFeatureFiles(branch, featureId))
+      featureDirs.map((featureId) => this.fetchFeatureFiles(branch, featureId)),
     )
 
     featureResults.forEach((result, i) => {
@@ -92,7 +91,7 @@ export class BranchScanner {
 
   private async fetchFeatureFiles(
     branch: string,
-    featureId: string
+    featureId: string,
   ): Promise<FileSnapshot | null> {
     try {
       // Parallel fetch all three files
