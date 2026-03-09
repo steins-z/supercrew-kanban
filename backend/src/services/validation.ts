@@ -161,10 +161,19 @@ export class ValidationService {
   }
 
   /**
-   * Compare Git data vs DB data using content hashes
+   * Compare Git data vs DB data using content hashes and commit SHAs
    */
   compareFeatureData(gitData: GitFileSnapshot, dbData: FeatureData): ComparisonResult {
-    // 1. Compute content hashes
+    // 1. Check commit SHA first (most reliable indicator of changes)
+    const gitCommitSha = gitData.sha
+    const dbCommitSha = dbData.git_commit_sha
+
+    if (gitCommitSha && dbCommitSha && gitCommitSha === dbCommitSha) {
+      // Same commit SHA - content is identical at commit level
+      return { identical: true, gitHash: gitCommitSha, dbHash: dbCommitSha }
+    }
+
+    // 2. Compute content hashes for deeper comparison
     const gitHash = this.computeContentHash({
       meta: gitData.meta_yaml,
       design: gitData.dev_design_md,
@@ -177,22 +186,52 @@ export class ValidationService {
       plan: dbData.dev_plan_md,
     })
 
-    // 2. Check if identical
+    // 3. Check if content is identical
     if (gitHash === dbHash) {
       return { identical: true, gitHash, dbHash }
     }
 
-    // 3. Compare timestamps
+    // 4. SHA differs and content differs - use commit timestamps to resolve conflict
+    if (gitCommitSha && dbCommitSha && gitCommitSha !== dbCommitSha) {
+      const gitCommitTime = gitData.updated_at || 0
+      const dbCommitTime = dbData.last_git_commit_at || 0
+      const timeDiff = gitCommitTime - dbCommitTime
+
+      console.log(`[Validation] SHA mismatch: Git=${gitCommitSha.substring(0, 7)} (${new Date(gitCommitTime).toISOString()}), Agent=${dbCommitSha.substring(0, 7)} (${new Date(dbCommitTime).toISOString()})`)
+
+      // IMPORTANT: We use 5-second tolerance because:
+      // - Allows for minor clock skew between Agent and Git server
+      // - Edge case: If commits differ but timestamps match, we assume they're equivalent
+      // - In practice, meaningful changes will have different timestamps
+      if (Math.abs(timeDiff) < 5000) {
+        return { identical: true, gitHash, dbHash }
+      }
+
+      // 6. Determine which is newer based on commit timestamps
+      return {
+        identical: false,
+        gitIsNewer: gitCommitTime > dbCommitTime,
+        agentIsNewer: dbCommitTime > gitCommitTime,
+        timeDiff,
+        gitHash,
+        dbHash,
+      }
+    }
+
+    // Fallback: Compare using updated_at timestamps
     const gitTime = gitData.updated_at
     const dbTime = dbData.updated_at
     const timeDiff = gitTime - dbTime
 
-    // 4. Within 5 seconds = consider identical (clock skew tolerance)
+    // IMPORTANT: We use 5-second tolerance because:
+    // - Allows for minor clock skew between Agent and Git server
+    // - Edge case: If commits differ but timestamps match, we assume they're equivalent
+    // - In practice, meaningful changes will have different timestamps
     if (Math.abs(timeDiff) < 5000) {
       return { identical: true, gitHash, dbHash }
     }
 
-    // 5. Determine which is newer
+    // Determine which is newer
     return {
       identical: false,
       gitIsNewer: gitTime > dbTime,
@@ -225,8 +264,10 @@ export class ValidationService {
         verified: true,
         sync_state: 'synced',
         git_sha: gitData.sha,
+        git_commit_sha: gitData.sha,  // Update commit SHA
         git_etag: gitData.etag,
         last_git_checked_at: Date.now(),
+        last_git_commit_at: gitData.updated_at,  // Update commit timestamp
         verified_at: Date.now(),
       })
 
@@ -248,8 +289,33 @@ export class ValidationService {
       }
     }
 
-    // Case 3: Agent write is newer -> retry briefly, then mark conflict
+    // Case 3: Agent write is newer -> check if it's a commit-level conflict
     if (comparison.agentIsNewer) {
+      const gitCommitSha = gitData.sha
+      const dbCommitSha = dbData.git_commit_sha
+
+      // If both have commit SHAs and they differ, this is a commit-level conflict
+      if (gitCommitSha && dbCommitSha && gitCommitSha !== dbCommitSha) {
+        // Agent has local changes (newer commit timestamp)
+        console.log(`[Validation] Agent has newer commit timestamp, keeping Agent data as conflict`)
+
+        await upsertFeature({
+          ...dbData,
+          source: 'agent',
+          verified: false,
+          sync_state: 'conflict',
+          last_git_checked_at: Date.now(),
+          last_sync_error: `Commit SHA mismatch: Agent timestamp newer than Git (keeping Agent data)`,
+        })
+
+        return {
+          feature_id: featureId,
+          success: true,
+          action: 'conflict',  // More accurate than 'verified'
+        }
+      }
+
+      // Otherwise, treat as pending push (retry with grace period)
       const ageMs = Date.now() - dbData.updated_at
 
       if (ageMs <= GRACE_PERIOD_MS) {
@@ -407,6 +473,7 @@ export class ValidationService {
       source: 'git',
       verified: true,
       git_sha: gitData.sha,
+      git_commit_sha: gitData.sha,  // Commit SHA from Git
       git_etag: gitData.etag,
       sync_state: 'synced',
       last_git_checked_at: Date.now(),
