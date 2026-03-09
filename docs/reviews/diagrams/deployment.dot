@@ -1,0 +1,15 @@
+digraph deployment {
+  rankdir=TB;
+  node [shape=box, style=filled];
+
+  turso [fillcolor=lightyellow, label="1. Turso 数据库\n创建 + 迁移"];
+  vercel_env [fillcolor=lightblue, label="2. Vercel 环境变量\nTURSO_DATABASE_URL\nTURSO_AUTH_TOKEN\nGITHUB_TOKEN\nCRON_SECRET"];
+  vercel_deploy [fillcolor=lightgreen, label="3. Vercel 部署\nBackend + Frontend"];
+  cron_verify [fillcolor=orange, label="4. 验证 Cron Jobs\n/api/cron/validate\n/api/cron/reconcile"];
+  monitor [fillcolor=lightpink, label="5. 监控\nVercel Logs\nDatabase Metrics"];
+
+  turso -> vercel_env;
+  vercel_env -> vercel_deploy;
+  vercel_deploy -> cron_verify;
+  cron_verify -> monitor;
+}

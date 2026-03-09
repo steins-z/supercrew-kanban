@@ -1,0 +1,24 @@
+digraph sync_states {
+  rankdir=LR;
+  node [shape=box, style=filled];
+
+  pending_verify [fillcolor=lightgray, label="pending_verify\n待验证"];
+  local_only [fillcolor=lightblue, label="local_only\n本地分支\n(无远端)"];
+  pending_push [fillcolor=lightyellow, label="pending_push\n未推送\n(commits_ahead>0)"];
+  synced [fillcolor=lightgreen, label="synced\n已同步\n(Git verified)"];
+  conflict [fillcolor=orange, label="conflict\nAgent 时间戳\n更新"];
+  error [fillcolor=lightcoral, label="error\n验证失败"];
+  git_missing [fillcolor=red, label="git_missing\n远端不存在\n(已删除)"];
+
+  pending_verify -> local_only [label="has_upstream=false"];
+  pending_verify -> pending_push [label="404 + commits_ahead>0"];
+  pending_verify -> synced [label="SHA 一致"];
+  pending_verify -> conflict [label="SHA 不同\nAgent 时间戳更新"];
+  pending_verify -> error [label="GitHub API error"];
+  pending_verify -> git_missing [label="404 + commits_ahead=0"];
+
+  local_only -> pending_push [label="git push -u origin"];
+  pending_push -> synced [label="验证通过"];
+  conflict -> synced [label="Git 覆盖"];
+  error -> pending_verify [label="重试"];
+}

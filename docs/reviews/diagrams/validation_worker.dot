@@ -1,0 +1,18 @@
+digraph validation_worker {
+  rankdir=TB;
+  node [shape=box, style=filled];
+
+  cron [fillcolor=lightblue, label="Vercel Cron\n(每 2 分钟)"];
+  fetch_queue [fillcolor=lightgray, label="获取队列\n(unverified features)"];
+  batch [fillcolor=lightyellow, label="批量验证\n(10 并发)"];
+  validate [fillcolor=lightgreen, label="验证单个特性\n(GitHub API)"];
+  update [fillcolor=orange, label="更新数据库\n(sync_state)"];
+  retry [fillcolor=lightcoral, label="失败重试\n(exponential backoff)"];
+
+  cron -> fetch_queue;
+  fetch_queue -> batch;
+  batch -> validate [label="for each"];
+  validate -> update [label="成功"];
+  validate -> retry [label="失败"];
+  retry -> batch [label="重新入队"];
+}

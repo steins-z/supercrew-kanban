@@ -1,0 +1,19 @@
+digraph review_flow {
+  rankdir=TB;
+  node [shape=box, style=filled];
+
+  implement [fillcolor=lightblue, label="实现任务\n(Subagent)"];
+  spec_review [fillcolor=lightyellow, label="规格审查\n(Spec Reviewer)"];
+  spec_fix [fillcolor=orange, label="修复规格问题\n(Implementer)"];
+  code_review [fillcolor=lightgreen, label="代码质量审查\n(Code Reviewer)"];
+  code_fix [fillcolor=orange, label="修复质量问题\n(Implementer)"];
+  complete [fillcolor=lightgreen, label="任务完成"];
+
+  implement -> spec_review;
+  spec_review -> spec_fix [label="❌ 问题"];
+  spec_fix -> spec_review [label="重新审查"];
+  spec_review -> code_review [label="✅ 通过"];
+  code_review -> code_fix [label="❌ 问题"];
+  code_fix -> code_review [label="重新审查"];
+  code_review -> complete [label="✅ 通过"];
+}

@@ -1,0 +1,11 @@
+digraph test_pyramid {
+  rankdir=TB;
+  node [shape=box, style=filled];
+
+  e2e [fillcolor=lightcoral, label="E2E 测试\n(1 个)\n完整工作流"];
+  integration [fillcolor=lightyellow, label="集成测试\n(3 个)\n验证逻辑 + GitHub"];
+  unit [fillcolor=lightgreen, label="单元测试\n(4 个)\nGitMetadata + SyncState"];
+
+  e2e -> integration [label="依赖"];
+  integration -> unit [label="依赖"];
+}

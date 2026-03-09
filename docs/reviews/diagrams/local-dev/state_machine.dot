@@ -1,0 +1,24 @@
+digraph state_machine {
+  rankdir=LR;
+  node [shape=circle, style=filled];
+
+  pending_verify [fillcolor=lightgray, label="pending\nverify"];
+  local_only [fillcolor=lightblue, label="local\nonly"];
+  pending_push [fillcolor=lightyellow, label="pending\npush"];
+  synced [fillcolor=lightgreen, label="synced"];
+  conflict [fillcolor=orange, label="conflict"];
+  error [fillcolor=lightcoral, label="error"];
+  git_missing [fillcolor=red, label="git\nmissing"];
+
+  pending_verify -> local_only [label="has_upstream=false"];
+  pending_verify -> pending_push [label="404+ahead>0"];
+  pending_verify -> synced [label="SHA match"];
+  pending_verify -> conflict [label="Agent newer"];
+  pending_verify -> error [label="API error"];
+  pending_verify -> git_missing [label="404+ahead=0"];
+
+  local_only -> pending_push [label="git push -u"];
+  pending_push -> synced [label="验证通过"];
+  conflict -> synced [label="Git 覆盖"];
+  error -> pending_verify [label="重试"];
+}

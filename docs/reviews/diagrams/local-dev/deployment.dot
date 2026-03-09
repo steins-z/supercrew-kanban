@@ -1,0 +1,13 @@
+digraph deployment {
+  rankdir=TB;
+  node [shape=box, style=filled];
+
+  migrate [fillcolor=lightyellow, label="1. 运行数据库迁移\n(2 个 SQL 文件)"];
+  deploy_backend [fillcolor=lightblue, label="2. 部署后端\n(Vercel)"];
+  deploy_frontend [fillcolor=lightpink, label="3. 部署前端\n(Vercel)"];
+  monitor [fillcolor=lightgreen, label="4. 监控\n(Vercel Logs)"];
+
+  migrate -> deploy_backend;
+  deploy_backend -> deploy_frontend;
+  deploy_frontend -> monitor;
+}

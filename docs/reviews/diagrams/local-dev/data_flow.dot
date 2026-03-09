@@ -1,0 +1,22 @@
+digraph data_flow {
+  rankdir=LR;
+  node [shape=record, style=filled];
+
+  agent_data [fillcolor=lightblue, label="{Agent Report|git_metadata:\l- last_commit_sha\l- last_commit_timestamp\l- has_upstream\l- commits_ahead\l}"];
+
+  db_data [fillcolor=lightyellow, label="{Database|git_commit_sha\llast_git_commit_at\lhas_upstream\lcommits_ahead\lsync_state\l}"];
+
+  github_data [fillcolor=lightgray, label="{GitHub API|Commits API:\l- real SHA\l- real timestamp\lContents API:\l- meta.yaml\l- dev-design.md\l}"];
+
+  validation [fillcolor=lightcoral, label="{Validation Logic|1. Fast path check\l2. Fetch GitHub\l3. SHA comparison\l4. Timestamp resolution\l}"];
+
+  final_state [fillcolor=lightgreen, label="{Final State|sync_state\lsource\lverified\lgit_commit_sha\l}"];
+
+  frontend [fillcolor=lightpink, label="{Frontend|FreshnessIndicator:\l✅ verified\l⚡ realtime\l⏳ pending\l⚠️ conflict\l🕐 stale\l❌ orphaned\l}"];
+
+  agent_data -> db_data [label="Upsert"];
+  db_data -> validation [label="Read"];
+  github_data -> validation [label="Fetch"];
+  validation -> final_state [label="Update"];
+  final_state -> frontend [label="Display"];
+}

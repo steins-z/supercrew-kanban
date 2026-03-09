@@ -1,0 +1,41 @@
+digraph new_arch {
+  rankdir=TB;
+  node [shape=box, style=filled];
+
+  subgraph cluster_sources {
+    label="数据来源";
+    style=filled;
+    fillcolor=lightgray;
+
+    agent [fillcolor=lightyellow, label="Local Agent\n(实时上报)"];
+    git [fillcolor=lightblue, label="Git Repository\n(真相源)"];
+  }
+
+  subgraph cluster_backend {
+    label="Backend Layer";
+    style=filled;
+    fillcolor=lightcyan;
+
+    api [fillcolor=lightgreen, label="Agent API\nPOST /api/features"];
+    db [fillcolor=orange, label="Database (Turso)\n实时缓存"];
+    worker [fillcolor=lightcoral, label="Validation Worker\n(Vercel Cron 2min)"];
+  }
+
+  subgraph cluster_output {
+    label="数据输出";
+    style=filled;
+    fillcolor=lightgray;
+
+    board_api [fillcolor=lightpink, label="Board API\nGET /api/board"];
+    frontend [fillcolor=lightpink, label="Frontend\n(实时 + 验证标识)"];
+  }
+
+  agent -> api [label="1. Report"];
+  api -> db [label="2. Upsert\n(unverified)"];
+  worker -> db [label="3. Fetch\nunverified"];
+  worker -> git [label="4. Validate\nvs Git"];
+  git -> worker [label="5. Git data"];
+  worker -> db [label="6. Update\n(verified/orphaned)"];
+  db -> board_api [label="7. Read"];
+  board_api -> frontend [label="8. Display"];
+}

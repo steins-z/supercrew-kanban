@@ -1,0 +1,10 @@
+digraph api_comparison {
+  rankdir=LR;
+  node [shape=record, style=filled];
+
+  before [fillcolor=lightcoral, label="{实施前|每次扫描\l必调 GitHub API\l|~720 次/天\l(每 2 分钟)\l|~18% 配额\l}"];
+
+  after [fillcolor=lightgreen, label="{实施后|50% 快速路径\l跳过 GitHub API\l|~360 次/天\l(仅上游分支)\l|~9% 配额\l}"];
+
+  before -> after [label="优化 50%"];
+}

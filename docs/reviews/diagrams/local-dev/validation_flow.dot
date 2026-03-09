@@ -1,0 +1,40 @@
+digraph validation_flow {
+  rankdir=TB;
+  node [shape=diamond, style=filled, fillcolor=lightyellow];
+  edge [fontsize=10];
+
+  start [shape=box, fillcolor=lightblue, label="开始验证"];
+  has_upstream [label="has_upstream\n= false?"];
+  fast_path [shape=box, fillcolor=lightgreen, label="快速路径\nsync_state = local_only\n跳过 GitHub API"];
+
+  fetch_github [shape=box, fillcolor=lightgray, label="调用 GitHub API\nfetchFeatureFromGit()"];
+  github_404 [label="GitHub 返回\n404?"];
+
+  commits_ahead [label="commits_ahead\n> 0?"];
+  pending_push [shape=box, fillcolor=lightyellow, label="未推送\nsync_state = pending_push"];
+  orphaned [shape=box, fillcolor=red, label="已删除\nsync_state = git_missing"];
+
+  sha_match [label="SHA\n一致?"];
+  synced [shape=box, fillcolor=lightgreen, label="已同步\nsync_state = synced"];
+
+  timestamp_compare [label="Agent 时间戳\n更新?"];
+  conflict [shape=box, fillcolor=orange, label="冲突\nsync_state = conflict\n保留 Agent 数据"];
+  updated [shape=box, fillcolor=lightgreen, label="更新\nsync_state = synced\n使用 Git 数据"];
+
+  start -> has_upstream;
+  has_upstream -> fast_path [label="是"];
+  has_upstream -> fetch_github [label="否"];
+
+  fetch_github -> github_404;
+  github_404 -> commits_ahead [label="是"];
+  github_404 -> sha_match [label="否"];
+
+  commits_ahead -> pending_push [label="是"];
+  commits_ahead -> orphaned [label="否"];
+
+  sha_match -> synced [label="是"];
+  sha_match -> timestamp_compare [label="否"];
+
+  timestamp_compare -> conflict [label="是"];
+  timestamp_compare -> updated [label="否"];
+}

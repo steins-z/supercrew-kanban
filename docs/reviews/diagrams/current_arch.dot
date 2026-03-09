@@ -1,0 +1,14 @@
+digraph current_arch {
+  rankdir=LR;
+  node [shape=box, style=filled];
+
+  git [fillcolor=lightblue, label="Git Repository\n(.supercrew/tasks/*)"];
+  github_api [fillcolor=lightgray, label="GitHub API\n(每次扫描 5000 req/h 限制)"];
+  frontend [fillcolor=lightpink, label="Frontend\n(只能在 push 后看到更新)"];
+
+  git -> github_api [label="Scan branches"];
+  github_api -> frontend [label="返回数据\n延迟高 (~2s)"];
+
+  agent [fillcolor=lightyellow, label="Local Agent\n(无法上报状态)", style="filled,dashed"];
+  agent -> git [label="❌ 无法直接通信", style=dashed, color=red];
+}

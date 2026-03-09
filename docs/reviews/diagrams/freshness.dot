@@ -1,0 +1,19 @@
+digraph freshness {
+  rankdir=LR;
+  node [shape=box, style=filled];
+
+  verified [fillcolor=lightgreen, label="✅ verified\n已验证\n(Git confirmed)"];
+  realtime [fillcolor=lightblue, label="⚡ realtime\n实时\n(Agent data)"];
+  pending [fillcolor=lightgray, label="⏳ pending\n待验证"];
+  conflict [fillcolor=orange, label="⚠️ conflict\nAgent vs Git\n冲突"];
+  stale [fillcolor=lightyellow, label="🕐 stale\n过期\n(验证失败)"];
+  orphaned [fillcolor=red, label="❌ orphaned\n已删除"];
+
+  realtime -> verified [label="验证成功"];
+  realtime -> conflict [label="SHA 不同"];
+  realtime -> stale [label="验证失败"];
+  realtime -> orphaned [label="Git 404"];
+
+  pending -> verified [label="验证通过"];
+  conflict -> verified [label="Git 覆盖"];
+}

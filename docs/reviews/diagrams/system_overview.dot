@@ -1,0 +1,81 @@
+digraph system_overview {
+  rankdir=TB;
+  node [shape=box, style=filled];
+
+  subgraph cluster_agent {
+    label="Agent Layer (Local)";
+    style=filled;
+    fillcolor=lightyellow;
+
+    agent_claude [label="Claude Code\n+ supercrew skills"];
+    agent_git [label="Local Git\n(read SHA, branch info)"];
+  }
+
+  subgraph cluster_backend {
+    label="Backend Layer (Vercel Serverless)";
+    style=filled;
+    fillcolor=lightcyan;
+
+    api_features [label="POST /api/features/report\nPOST /api/features/batch"];
+    api_board [label="GET /api/board\nGET /api/features/:id"];
+    api_sync [label="GET /api/board/sync/status"];
+    api_admin [label="POST /api/admin/api-keys"];
+
+    middleware_auth [label="Auth Middleware\n(Bearer token)"];
+
+    service_db [label="Database Service\n(upsert/query)"];
+    service_github [label="GitHub Service\n(fetch from Git)"];
+    service_validation [label="Validation Service\n(compare Agent vs Git)"];
+    service_freshness [label="Freshness Service\n(calculate indicators)"];
+
+    worker_validate [label="Validation Worker\n(Vercel Cron 2min)"];
+    worker_reconcile [label="Reconcile Worker\n(Vercel Cron daily)"];
+  }
+
+  subgraph cluster_storage {
+    label="Storage Layer";
+    style=filled;
+    fillcolor=lightgray;
+
+    db_turso [label="Turso Database\n(libSQL/SQLite)"];
+    github_repo [label="GitHub Repository\n(.supercrew/tasks/*)"];
+  }
+
+  subgraph cluster_frontend {
+    label="Frontend Layer (React + Vite)";
+    style=filled;
+    fillcolor=lightpink;
+
+    ui_board [label="Kanban Board"];
+    ui_badge [label="VerificationBadge"];
+    ui_banner [label="BoardMetadataBanner"];
+    ui_switcher [label="ProjectSwitcher"];
+  }
+
+  // Agent -> Backend
+  agent_claude -> middleware_auth [label="API calls"];
+  middleware_auth -> api_features;
+  middleware_auth -> api_board;
+  api_features -> service_db;
+
+  // Backend -> Storage
+  service_db -> db_turso;
+  service_github -> github_repo;
+  service_validation -> service_github;
+  service_validation -> service_db;
+
+  // Workers
+  worker_validate -> service_validation [label="每 2 分钟"];
+  worker_reconcile -> service_db [label="每天 3am UTC"];
+  worker_reconcile -> service_github;
+
+  // Backend -> Frontend
+  api_board -> service_db;
+  api_board -> service_freshness;
+  service_freshness -> ui_board;
+  ui_board -> ui_badge;
+  ui_board -> ui_banner;
+
+  // Local Agent Git
+  agent_git -> agent_claude [label="Git metadata"];
+}

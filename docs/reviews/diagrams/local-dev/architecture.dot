@@ -1,0 +1,20 @@
+digraph architecture {
+  rankdir=LR;
+  node [shape=box, style=filled];
+
+  Agent [fillcolor=lightblue, label="Local Agent\n(Claude Code)"];
+  API [fillcolor=lightgreen, label="Backend API\n/api/features"];
+  DB [fillcolor=lightyellow, label="Database\n(Turso)"];
+  Worker [fillcolor=lightcoral, label="Validation Worker\n(Vercel Cron)"];
+  GitHub [fillcolor=lightgray, label="GitHub API"];
+  Frontend [fillcolor=lightpink, label="Frontend UI"];
+
+  Agent -> API [label="1. Report\n+ GitMetadata"];
+  API -> DB [label="2. Upsert\nwith git_commit_sha"];
+  Worker -> DB [label="3. Fetch\nunverified features"];
+  Worker -> GitHub [label="4a. Validate\n(if has_upstream)"];
+  Worker -> DB [label="4b. Fast path\n(if local_only)"];
+  GitHub -> Worker [label="5. Real commit info"];
+  Worker -> DB [label="6. Update\nsync_state"];
+  DB -> Frontend [label="7. Read\nwith freshness"];
+}
