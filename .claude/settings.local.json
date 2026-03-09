@@ -15,7 +15,14 @@
       "Bash(git commit -m \"Merge branch ''main'' into feature/multi-branch-kanban:*)",
       "Bash(git fetch:*)",
       "Bash(git mv:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git ls-tree -r origin/main --name-only)",
+      "Bash(git checkout origin/backlog/multi-branch-kanban -- .supercrew/tasks/multi-branch-kanban/)",
+      "Bash(git ls-tree -r origin/backlog/multi-branch-kanban --name-only)",
+      "Bash(git checkout origin/main -- .supercrew/tasks/multi-branch-kanban/)",
+      "Bash(git log --oneline feature/multi-branch-kanban --not origin/main)",
+      "Bash(git checkout -b user/luna-chen/multi-branch-kanban)",
+      "Bash(git add .claude/settings.local.json)"
     ]
   }
 }
