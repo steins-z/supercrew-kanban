@@ -74,14 +74,14 @@ feature-oauth:
 ```typescript
 interface FeatureMeta {
   // ... existing fields
-  branches?: BranchInfo[] // NEW: optional for backward compat
-  primaryBranch?: string // NEW: main priority
+  branches?: BranchInfo[]; // NEW: optional for backward compat
+  primaryBranch?: string; // NEW: main priority
 }
 
 interface BranchInfo {
-  branch: string
-  filesHash: string
-  isDifferent: boolean
+  branch: string;
+  filesHash: string;
+  isDifferent: boolean;
 }
 ```
 

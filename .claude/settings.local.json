@@ -29,7 +29,10 @@
       "Bash(pnpm exec husky init)",
       "Bash(pnpm format)",
       "Bash(git add .prettierrc.json .prettierignore .eslintrc.json .eslintignore .husky .vscode package.json .supercrew/tasks/code-style-standards/)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(pnpm add -D -w eslint-plugin-react eslint-plugin-react-hooks)",
+      "Bash(pnpm add -D eslint-plugin-react eslint-plugin-react-hooks)",
+      "Bash(git add .prettierrc.json .eslintrc.json package.json)"
     ]
   }
 }

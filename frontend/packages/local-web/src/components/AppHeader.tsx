@@ -69,8 +69,8 @@ export default function AppHeader({
   onLogout,
   onDisconnect,
 }: AppHeaderProps) {
-  const { t, i18n } = useTranslation()
-  const isZh = i18n.language?.startsWith('zh') ?? false
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language?.startsWith('zh') ?? false;
 
   return (
     <header

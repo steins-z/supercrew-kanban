@@ -1,16 +1,16 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { clearToken, isAuthenticated, getUserInfo } from '../auth.js'
-import { clearSelectedRepo } from '../api.js'
+import { useQueryClient } from '@tanstack/react-query';
+import { clearToken, isAuthenticated, getUserInfo } from '../auth.js';
+import { clearSelectedRepo } from '../api.js';
 
 export function useAuth() {
-  const queryClient = useQueryClient()
-  const user = getUserInfo()
+  const queryClient = useQueryClient();
+  const user = getUserInfo();
 
   function logout() {
-    clearToken()
-    clearSelectedRepo()
-    queryClient.clear()
-    window.location.href = '/login'
+    clearToken();
+    clearSelectedRepo();
+    queryClient.clear();
+    window.location.href = '/login';
   }
 
   return {
@@ -18,5 +18,5 @@ export function useAuth() {
     isLoading: false,
     isAuthenticated: isAuthenticated() && !!user,
     logout,
-  }
+  };
 }
