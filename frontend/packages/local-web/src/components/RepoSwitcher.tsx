@@ -1,21 +1,36 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { CaretDown, Check, X, Plus } from '@phosphor-icons/react';
 import { useRepoSwitcher } from '@app/hooks/useRepoSwitcher';
 import { useRepo } from '@app/hooks/useRepo';
+import RepoSelectModal from './RepoSelectModal';
+import LocalRepoModal from './LocalRepoModal';
 
 export default function RepoSwitcher() {
   const { repo: currentRepo } = useRepo(); // Get current repo from useRepo
   const { recentRepos, addRepo, removeRepo } = useRepoSwitcher();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredRepo, setHoveredRepo] = useState<string | null>(null); // Track hovered repo by ID
+  const [showRepoModal, setShowRepoModal] = useState(false);
+  const [showLocalModal, setShowLocalModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Check if we're in local-git mode
+  const isLocalMode = import.meta.env.VITE_DEV_MODE === 'local-git';
 
   // Add current repo to recent repos when it changes
   useEffect(() => {
     if (currentRepo) {
-      addRepo(currentRepo.owner, currentRepo.repo);
+      // For local mode, pass full_name as repo to preserve the path
+      // For GitHub mode, pass the repo name
+      if (isLocalMode) {
+        addRepo(currentRepo.owner, currentRepo.full_name);
+      } else {
+        addRepo(currentRepo.owner, currentRepo.repo);
+      }
     }
-  }, [currentRepo, addRepo]);
+  }, [currentRepo, addRepo, isLocalMode]);
 
   // Click outside to close
   useEffect(() => {
@@ -36,9 +51,15 @@ export default function RepoSwitcher() {
 
   // Handle repo switching
   const handleSwitchRepo = (owner: string, repo: string) => {
-    // For now, just reload the page
-    // TODO: Implement proper repo switching with React Query invalidation
-    window.location.href = `/?owner=${owner}&repo=${repo}`;
+    // For local mode, repo IS the path, so pass it as repo_path
+    // For GitHub mode, pass owner and repo separately
+    const isLocalRepo = owner === 'local' && (repo.includes('\\') || repo.includes('/'));
+
+    if (isLocalRepo) {
+      window.location.href = `/?mode=local-git&repo_path=${encodeURIComponent(repo)}`;
+    } else {
+      window.location.href = `/?owner=${owner}&repo=${repo}`;
+    }
   };
 
   const handleRemoveRepo = (
@@ -52,11 +73,14 @@ export default function RepoSwitcher() {
 
   // Display text for trigger button
   const displayText = currentRepo
-    ? `${currentRepo.owner}/${currentRepo.repo}`
+    ? isLocalMode && (currentRepo.repo.includes('\\') || currentRepo.repo.includes('/'))
+      ? currentRepo.repo  // Show full path for local repos
+      : `${currentRepo.owner}/${currentRepo.repo}`  // Show owner/repo for GitHub repos
     : 'Select Repository';
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative' }}>
+    <>
+      <div ref={dropdownRef} style={{ position: 'relative' }}>
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -129,6 +153,10 @@ export default function RepoSwitcher() {
               repo.repo === currentRepo.repo;
             const isHovering = hoveredRepo === repoId;
 
+            // For local repos, show just the path; for GitHub repos, show owner/repo
+            const isLocalRepo = repo.owner === 'local' && (repo.repo.includes('\\') || repo.repo.includes('/'));
+            const displayText = isLocalRepo ? repo.repo : `${repo.owner}/${repo.repo}`;
+
             return (
               <div
                 key={repoId}
@@ -163,7 +191,7 @@ export default function RepoSwitcher() {
                 >
                   {isCurrent && <Check size={14} weight="bold" />}
                   <span>
-                    {repo.owner}/{repo.repo}
+                    {displayText}
                   </span>
                 </div>
 
@@ -216,9 +244,14 @@ export default function RepoSwitcher() {
           {/* Connect Another Repo CTA */}
           <div
             onClick={() => {
-              // TODO: Trigger OAuth flow
-              console.log('[RepoSwitcher] Connect another repo clicked');
               setIsOpen(false);
+              if (isLocalMode) {
+                // Local mode: show path input modal
+                setShowLocalModal(true);
+              } else {
+                // GitHub mode: show repo selection modal
+                setShowRepoModal(true);
+              }
             }}
             style={{
               display: 'flex',
@@ -245,10 +278,31 @@ export default function RepoSwitcher() {
             }}
           >
             <Plus size={14} weight="bold" />
-            <span>Connect Another Repo</span>
+            <span>{isLocalMode ? 'Add Local Repository' : 'Connect Another Repo'}</span>
           </div>
         </div>
       )}
     </div>
+
+    {/* Modals */}
+    <RepoSelectModal
+      isOpen={showRepoModal}
+      onClose={() => setShowRepoModal(false)}
+      onSelectRepo={(owner, repo) => {
+        setShowRepoModal(false);
+        handleSwitchRepo(owner, repo);
+      }}
+    />
+
+    <LocalRepoModal
+      isOpen={showLocalModal}
+      onClose={() => setShowLocalModal(false)}
+      onSelectPath={(path) => {
+        setShowLocalModal(false);
+        // For local mode, use path as repo identifier
+        window.location.href = `/?mode=local-git&repo_path=${encodeURIComponent(path)}`;
+      }}
+    />
+  </>
   );
 }

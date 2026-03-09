@@ -142,8 +142,13 @@ export function useRepoSwitcher() {
   // ─── Add Repo (after OAuth) ────────────────────────────────────────
 
   const addRepo = useCallback((owner: string, repo: string, displayName?: string) => {
-    const fullName = `${owner}/${repo}`;
+    // For local paths, repo IS the full path and owner is just 'local'
+    // For GitHub repos, construct owner/repo format
+    const isLocalPath = owner === 'local' && (repo.includes('\\') || repo.includes('/'));
+    const fullName = isLocalPath ? repo : `${owner}/${repo}`;
     const now = new Date().toISOString();
+
+    console.log('[useRepoSwitcher] addRepo called:', { owner, repo, isLocalPath, fullName });
 
     const currentStorage = loadStorage();
     const existingIndex = currentStorage.recentRepos.findIndex(
@@ -174,6 +179,8 @@ export function useRepoSwitcher() {
         updatedRecent = updatedRecent.slice(0, MAX_RECENT_REPOS);
       }
     }
+
+    console.log('[useRepoSwitcher] Saving to storage:', { currentRepo: fullName, recentRepos: updatedRecent });
 
     saveStorage({
       currentRepo: fullName,

@@ -117,3 +117,60 @@
 2. Consider React Query invalidation instead of window.reload()
 3. Add keyboard navigation support
 4. Add empty state when no repos exist
+
+## 2026-03-09 — Modal Implementation Complete
+
+### Changes Made
+
+**"Connect Another Repo" Implementation**:
+- ✅ Created `RepoSelectModal.tsx` for GitHub mode
+  - Fetches user repos using GitHub API
+  - Shows repos with `.supercrew` directory indicator
+  - Includes search functionality
+  - Select repo to switch
+- ✅ Created `LocalRepoModal.tsx` for local-git mode
+  - Simple text input for file path
+  - Enter key support for quick submission
+  - Validates input before submitting
+- ✅ Integrated both modals into `RepoSwitcher.tsx`
+  - Detects mode using `VITE_DEV_MODE` env var
+  - Shows appropriate modal based on mode
+  - Handles repo selection and path input
+
+**Local Mode Path Handling Fix**:
+- ✅ Fixed path corruption issue (`local/D:\repo\...` → `D:\repo\...`)
+- ✅ Modified `useRepoSwitcher.addRepo()` to detect local paths
+  - Checks if `owner === 'local'` and repo contains path separators
+  - Stores `fullName` as just the path for local mode
+  - Stores `fullName` as `owner/repo` for GitHub mode
+- ✅ Updated `RepoSwitcher` display logic
+  - Shows full path for local repos
+  - Shows `owner/repo` format for GitHub repos
+- ✅ Fixed `handleSwitchRepo()` to pass correct URL params
+  - Local: `/?mode=local-git&repo_path=<path>`
+  - GitHub: `/?owner=<owner>&repo=<repo>`
+
+**Files Modified**:
+1. `frontend/packages/local-web/src/components/RepoSelectModal.tsx` (new)
+2. `frontend/packages/local-web/src/components/LocalRepoModal.tsx` (new)
+3. `frontend/packages/local-web/src/components/RepoSwitcher.tsx`
+   - Integrated modals
+   - Fixed display logic for local paths
+   - Updated handleSwitchRepo with mode detection
+4. `frontend/packages/app-core/src/hooks/useRepoSwitcher.ts`
+   - Added isLocalPath detection in addRepo
+   - Added debug logging
+5. `d:/repo/supercrew-kanban/clear-localstorage.html` (deleted - temp debug tool)
+
+### Testing Status
+
+✅ **Completed**:
+- Modal components render correctly
+- Mode detection works (local vs GitHub)
+- Local path input and submission
+- GitHub repo list fetching
+- Path storage without corruption
+- Display shows correct format for each mode
+- Repo switching with correct URL parameters
+
+**Implementation Complete**: All core functionality for Repository Switcher is now working in both local and GitHub modes.

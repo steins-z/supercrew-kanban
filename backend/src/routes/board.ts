@@ -24,6 +24,8 @@ boardRouter.get('/multi-branch', async (c) => {
   if (mode === 'local-git') {
     try {
       const repoPath = c.req.query('repo_path') || process.cwd();
+      console.log('[board] Received repo_path query param:', c.req.query('repo_path'));
+      console.log('[board] Using repoPath:', repoPath);
       const localScanner = new LocalGitScanner(repoPath);
 
       // Step 1: Discover branches
