@@ -56,7 +56,7 @@ export class LocalGitScanner {
       this.errors.push({
         branch: 'all',
         error: error instanceof Error ? error.message : String(error),
-        type: 'network',
+        type: 'git', // Changed from 'network' to 'git' for local operations
       });
       return [];
     }
@@ -81,7 +81,7 @@ export class LocalGitScanner {
         this.errors.push({
           branch,
           error: result.reason instanceof Error ? result.reason.message : String(result.reason),
-          type: 'network',
+          type: 'git', // Changed from 'network' to 'git' for local operations
         });
       }
     });
@@ -135,11 +135,7 @@ export class LocalGitScanner {
   private async listFeatureDirs(branch: string): Promise<string[]> {
     try {
       // Use git ls-tree to list directory contents
-      const result = await this.git.raw([
-        'ls-tree',
-        '--name-only',
-        `${branch}:${FEATURES_PATH}`,
-      ]);
+      const result = await this.git.raw(['ls-tree', '--name-only', `${branch}:${FEATURES_PATH}`]);
 
       // Parse output (one directory per line)
       return result
