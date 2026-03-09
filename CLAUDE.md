@@ -29,13 +29,13 @@ npm run typecheck           # Backend Node.js typecheck
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `api/index.ts` | Vercel serverless entry point (uses @hono/node-server/vercel) |
-| `vercel.json` | Build config + URL rewrites |
-| `backend/src/index.ts` | Hono app with OAuth routes (/auth/github, /auth/callback, /health) |
-| `frontend/packages/local-web/` | Main frontend app |
-| `frontend/packages/app-core/` | Shared hooks and API layer |
+| File                           | Purpose                                                            |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `api/index.ts`                 | Vercel serverless entry point (uses @hono/node-server/vercel)      |
+| `vercel.json`                  | Build config + URL rewrites                                        |
+| `backend/src/index.ts`         | Hono app with OAuth routes (/auth/github, /auth/callback, /health) |
+| `frontend/packages/local-web/` | Main frontend app                                                  |
+| `frontend/packages/app-core/`  | Shared hooks and API layer                                         |
 
 ## Common Mistakes to Avoid
 

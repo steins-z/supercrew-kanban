@@ -1,19 +1,19 @@
 // File-level diff and deduplication algorithm
 
-import { createHash } from "crypto";
+import { createHash } from 'crypto';
 import type {
   FileSnapshot,
   FeatureMetaWithBranches,
   BranchInfo,
   FeatureMeta,
-} from "../types/board.js";
-import type { SupercrewStatus } from "../types/shared.js";
+} from '../types/board.js';
+import type { SupercrewStatus } from '../types/shared.js';
 
 // Status priority for primary branch selection
 // Higher values indicate more progress and should be preferred
 const STATUS_PRIORITY: Record<SupercrewStatus, number> = {
   shipped: 4,
-  "ready-to-ship": 3,
+  'ready-to-ship': 3,
   doing: 2,
   todo: 1,
 };
@@ -23,13 +23,12 @@ export class FeatureDiff {
 
   // ─── Task 1.6: Hash Computation ───────────────────────────────────────
 
-  private computeHash(files: FileSnapshot["files"]): string {
+  private computeHash(files: FileSnapshot['files']): string {
     // Concatenate all file contents (nulls become empty strings)
-    const combined =
-      (files.meta ?? "") + (files.design ?? "") + (files.plan ?? "");
+    const combined = (files.meta ?? '') + (files.design ?? '') + (files.plan ?? '');
 
     // Compute MD5 hash
-    return createHash("md5").update(combined).digest("hex");
+    return createHash('md5').update(combined).digest('hex');
   }
 
   // ─── Task 1.7: Deduplication Algorithm ────────────────────────────────
@@ -46,9 +45,7 @@ export class FeatureDiff {
       const allSnapshots = Array.from(hashMap.values())
         .flat()
         .map((branch) =>
-          this.snapshots.find(
-            (s) => s.featureId === featureId && s.branch === branch,
-          ),
+          this.snapshots.find((s) => s.featureId === featureId && s.branch === branch),
         )
         .filter((s) => s && s.files.meta) as FileSnapshot[];
 
@@ -64,19 +61,17 @@ export class FeatureDiff {
       // Sort by: 1) status priority, 2) branch type (non-backlog preferred), 3) updated date
       snapshotsWithMeta.sort((a, b) => {
         // 1. Status priority (higher is better)
-        const statusA = STATUS_PRIORITY[a.meta.status || "todo"] || 1;
-        const statusB = STATUS_PRIORITY[b.meta.status || "todo"] || 1;
+        const statusA = STATUS_PRIORITY[a.meta.status || 'todo'] || 1;
+        const statusB = STATUS_PRIORITY[b.meta.status || 'todo'] || 1;
         if (statusA !== statusB) return statusB - statusA;
 
         // 2. Branch type (non-backlog is better)
-        const isBacklogA = a.snapshot.branch.includes("/backlog-");
-        const isBacklogB = b.snapshot.branch.includes("/backlog-");
+        const isBacklogA = a.snapshot.branch.includes('/backlog-');
+        const isBacklogB = b.snapshot.branch.includes('/backlog-');
         if (isBacklogA !== isBacklogB) return isBacklogA ? 1 : -1;
 
         // 3. Updated date (newer is better)
-        return (b.meta.updated || "1970-01-01").localeCompare(
-          a.meta.updated || "1970-01-01",
-        );
+        return (b.meta.updated || '1970-01-01').localeCompare(a.meta.updated || '1970-01-01');
       });
       const primarySnapshot = snapshotsWithMeta[0];
 
@@ -87,23 +82,18 @@ export class FeatureDiff {
       for (const [hash, branches] of hashMap) {
         let filteredBranches = branches;
 
-        if (branches.includes("main")) {
+        if (branches.includes('main')) {
           // If main is present, only keep main (others are likely merged copies)
-          filteredBranches = ["main"];
+          filteredBranches = ['main'];
         } else if (branches.length > 1) {
           // If no main and multiple branches, keep only the most recently updated one
           const branchSnapshots = branches
-            .map((b) =>
-              this.snapshots.find(
-                (s) => s.featureId === featureId && s.branch === b,
-              ),
-            )
+            .map((b) => this.snapshots.find((s) => s.featureId === featureId && s.branch === b))
             .filter((s) => s && s.files.meta) as FileSnapshot[];
 
           const branchDates = branchSnapshots.map((snapshot) => ({
             branch: snapshot.branch,
-            updated:
-              this.parseMetaYaml(snapshot.files.meta!).updated || "1970-01-01",
+            updated: this.parseMetaYaml(snapshot.files.meta!).updated || '1970-01-01',
           }));
 
           branchDates.sort((a, b) => b.updated.localeCompare(a.updated));
@@ -165,10 +155,10 @@ export class FeatureDiff {
   private parseMetaYaml(base64Content: string): Partial<FeatureMeta> {
     try {
       // Decode base64
-      const content = Buffer.from(base64Content, "base64").toString("utf-8");
+      const content = Buffer.from(base64Content, 'base64').toString('utf-8');
 
       // Simple YAML parser (reuse frontend logic)
-      const lines = content.split("\n");
+      const lines = content.split('\n');
       const meta: Record<string, any> = {};
 
       for (const line of lines) {
@@ -180,28 +170,28 @@ export class FeatureDiff {
       }
 
       return {
-        id: meta.id ?? "",
-        title: meta.title ?? "",
-        status: meta.status ?? "planning",
-        owner: meta.owner ?? "",
-        priority: meta.priority ?? "P2",
+        id: meta.id ?? '',
+        title: meta.title ?? '',
+        status: meta.status ?? 'planning',
+        owner: meta.owner ?? '',
+        priority: meta.priority ?? 'P2',
         teams: meta.teams ?? [],
         target_release: meta.target_release,
-        created: meta.created ?? "",
-        updated: meta.updated ?? "",
+        created: meta.created ?? '',
+        updated: meta.updated ?? '',
         tags: meta.tags ?? [],
         blocked_by: meta.blocked_by ?? [],
       } as FeatureMeta;
     } catch (error) {
       // Failed to parse, return minimal meta
       return {
-        id: "",
-        title: "Parse Error",
-        status: "planning",
-        owner: "",
-        priority: "P2",
-        created: "",
-        updated: "",
+        id: '',
+        title: 'Parse Error',
+        status: 'planning',
+        owner: '',
+        priority: 'P2',
+        created: '',
+        updated: '',
       };
     }
   }
@@ -213,10 +203,10 @@ export class FeatureDiff {
     }
 
     // Parse array: [item1, item2]
-    if (value.startsWith("[") && value.endsWith("]")) {
+    if (value.startsWith('[') && value.endsWith(']')) {
       const inner = value.slice(1, -1).trim();
       if (!inner) return [];
-      return inner.split(",").map((s) => s.trim());
+      return inner.split(',').map((s) => s.trim());
     }
 
     // Parse number

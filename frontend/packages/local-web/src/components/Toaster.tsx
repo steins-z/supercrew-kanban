@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react'
-import { subscribe, dismiss, type Toast } from '../lib/toast'
+import { useEffect, useState } from 'react';
+import { subscribe, dismiss, type Toast } from '../lib/toast';
 
 export function Toaster() {
-  const [toasts, setToasts] = useState<Toast[]>([])
-  useEffect(() => subscribe(setToasts), [])
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  useEffect(() => subscribe(setToasts), []);
 
-  if (!toasts.length) return null
+  if (!toasts.length) return null;
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-      {toasts.map(t => (
+      {toasts.map((t) => (
         <div
           key={t.id}
           onClick={() => dismiss(t.id)}
@@ -22,5 +22,5 @@ export function Toaster() {
         </div>
       ))}
     </div>
-  )
+  );
 }
