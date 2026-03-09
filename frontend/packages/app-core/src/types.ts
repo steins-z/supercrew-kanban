@@ -56,3 +56,19 @@ export interface FeatureBoard {
   features: FeatureMeta[];
   featuresByStatus: Record<SupercrewStatus, FeatureMeta[]>;
 }
+
+// ─── Repository Switcher Types ────────────────────────────────────────
+
+export interface RepoInfo {
+  owner: string;
+  repo: string;
+  lastAccessed: string; // ISO 8601 timestamp
+  displayName?: string; // Optional custom name
+}
+
+export interface RepoStorage {
+  currentRepo: string; // "owner/repo" format
+  recentRepos: RepoInfo[]; // Max 10 items
+}
+
+export type RepoIdentifier = `${string}/${string}`; // "owner/repo" format

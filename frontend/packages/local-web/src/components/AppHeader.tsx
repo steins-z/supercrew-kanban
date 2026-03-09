@@ -7,6 +7,7 @@ import {
   SignOutIcon,
   GlobeIcon,
 } from '@phosphor-icons/react';
+import RepoSwitcher from './RepoSwitcher';
 
 interface AppHeaderProps {
   dark: boolean;
@@ -119,6 +120,19 @@ export default function AppHeader({
         >
           Super Crew
         </span>
+
+        {/* ── Divider ── */}
+        <div
+          style={{
+            width: 1,
+            height: 20,
+            background: 'hsl(var(--_border))',
+            margin: '0 8px',
+          }}
+        />
+
+        {/* ── Repo Switcher ── */}
+        <RepoSwitcher />
       </div>
 
       {/* ── Controls ── */}
