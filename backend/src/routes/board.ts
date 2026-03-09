@@ -115,6 +115,7 @@ boardRouter.get('/multi-branch', async (c) => {
 
     // Step 1: Discover branches
     const branches = await scanner.discoverBranches(scanAll);
+    const branches = await scanner.discoverBranches(scanAll);
 
     if (branches.length === 0) {
       return c.json({
