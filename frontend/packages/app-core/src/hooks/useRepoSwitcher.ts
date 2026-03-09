@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import type { RepoInfo, RepoStorage } from '../types.js';
+import { formatRepoFullName } from '../utils/repoDetection.js';
 
 const STORAGE_KEY = 'supercrew:recentRepos';
 const MAX_RECENT_REPOS = 10;
@@ -142,13 +143,11 @@ export function useRepoSwitcher() {
   // ─── Add Repo (after OAuth) ────────────────────────────────────────
 
   const addRepo = useCallback((owner: string, repo: string, displayName?: string) => {
-    // For local paths, repo IS the full path and owner is just 'local'
-    // For GitHub repos, construct owner/repo format
-    const isLocalPath = owner === 'local' && (repo.includes('\\') || repo.includes('/'));
-    const fullName = isLocalPath ? repo : `${owner}/${repo}`;
+    // Use utility function for consistent full name construction
+    const fullName = formatRepoFullName(owner, repo);
     const now = new Date().toISOString();
 
-    console.log('[useRepoSwitcher] addRepo called:', { owner, repo, isLocalPath, fullName });
+    console.log('[useRepoSwitcher] addRepo called:', { owner, repo, fullName });
 
     const currentStorage = loadStorage();
     const existingIndex = currentStorage.recentRepos.findIndex(

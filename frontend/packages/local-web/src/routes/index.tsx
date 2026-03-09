@@ -52,15 +52,23 @@ function BoardPage() {
     if (owner && repo) {
       // GitHub mode: owner/repo params
       selectRepo({ owner, repo, full_name: `${owner}/${repo}` });
-      // Clean up URL params
-      void navigate({ to: '/', search: { owner: undefined, repo: undefined, repo_path: undefined, mode: undefined } });
+      // Clean up URL params (use replace to avoid history spam)
+      void navigate({
+        to: '/',
+        search: { owner: undefined, repo: undefined, repo_path: undefined, mode: undefined },
+        replace: true,
+      });
     } else if (repo_path) {
       // Local mode: repo_path param
       // Use path as both owner and repo for display
       const pathName = repo_path.split(/[/\\]/).pop() || 'local-repo';
       selectRepo({ owner: 'local', repo: pathName, full_name: repo_path });
-      // Clean up URL params but keep mode
-      void navigate({ to: '/', search: { owner: undefined, repo: undefined, repo_path: undefined, mode } });
+      // Clean up URL params but keep mode (use replace to avoid history spam)
+      void navigate({
+        to: '/',
+        search: { owner: undefined, repo: undefined, repo_path: undefined, mode },
+        replace: true,
+      });
     }
   }, [searchParams, selectRepo, navigate]);
 

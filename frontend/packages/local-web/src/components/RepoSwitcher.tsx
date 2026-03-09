@@ -3,6 +3,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { CaretDown, Check, X, Plus } from '@phosphor-icons/react';
 import { useRepoSwitcher } from '@app/hooks/useRepoSwitcher';
 import { useRepo } from '@app/hooks/useRepo';
+import { isLocalRepoPath, formatRepoDisplay } from '@app/utils/repoDetection';
+import { isLocalGitMode } from '@app/config/environment';
 import RepoSelectModal from './RepoSelectModal';
 import LocalRepoModal from './LocalRepoModal';
 
@@ -17,7 +19,7 @@ export default function RepoSwitcher() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Check if we're in local-git mode
-  const isLocalMode = import.meta.env.VITE_DEV_MODE === 'local-git';
+  const isLocalMode = isLocalGitMode();
 
   // Add current repo to recent repos when it changes
   useEffect(() => {
@@ -51,11 +53,8 @@ export default function RepoSwitcher() {
 
   // Handle repo switching
   const handleSwitchRepo = (owner: string, repo: string) => {
-    // For local mode, repo IS the path, so pass it as repo_path
-    // For GitHub mode, pass owner and repo separately
-    const isLocalRepo = owner === 'local' && (repo.includes('\\') || repo.includes('/'));
-
-    if (isLocalRepo) {
+    // Use utility function to check if it's a local repo
+    if (isLocalRepoPath(owner, repo)) {
       window.location.href = `/?mode=local-git&repo_path=${encodeURIComponent(repo)}`;
     } else {
       window.location.href = `/?owner=${owner}&repo=${repo}`;
@@ -73,9 +72,7 @@ export default function RepoSwitcher() {
 
   // Display text for trigger button
   const displayText = currentRepo
-    ? isLocalMode && (currentRepo.repo.includes('\\') || currentRepo.repo.includes('/'))
-      ? currentRepo.repo  // Show full path for local repos
-      : `${currentRepo.owner}/${currentRepo.repo}`  // Show owner/repo for GitHub repos
+    ? formatRepoDisplay(currentRepo.owner, currentRepo.repo)
     : 'Select Repository';
 
   return (
@@ -153,9 +150,8 @@ export default function RepoSwitcher() {
               repo.repo === currentRepo.repo;
             const isHovering = hoveredRepo === repoId;
 
-            // For local repos, show just the path; for GitHub repos, show owner/repo
-            const isLocalRepo = repo.owner === 'local' && (repo.repo.includes('\\') || repo.repo.includes('/'));
-            const displayText = isLocalRepo ? repo.repo : `${repo.owner}/${repo.repo}`;
+            // Use utility function for consistent display formatting
+            const displayText = formatRepoDisplay(repo.owner, repo.repo);
 
             return (
               <div
