@@ -33,7 +33,8 @@
       "Bash(pnpm add -D -w eslint-plugin-react eslint-plugin-react-hooks)",
       "Bash(pnpm add -D eslint-plugin-react eslint-plugin-react-hooks)",
       "Bash(git add .prettierrc.json .eslintrc.json package.json)",
-      "Bash(git checkout -b user/luna-chen/backlog-repo-switcher origin/main)"
+      "Bash(git checkout -b user/luna-chen/backlog-repo-switcher origin/main)",
+      "Bash(git checkout -b user/luna-chen/repo-switcher)"
     ]
   }
 }
