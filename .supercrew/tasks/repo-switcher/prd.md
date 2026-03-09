@@ -18,10 +18,31 @@ reviewers: []
 
 ### 核心功能
 
-- **仓库切换器 UI**：在页面顶部添加一个下拉菜单或切换器，显示用户最近访问过的仓库列表
+- **仓库切换器 UI**：在 AppHeader 的 "Super Crew" Logo 右侧添加仓库切换器，显示完整的 `owner/repo ▾` 格式
+- **下拉菜单设计**：
+  - 点击切换器展开下拉菜单，显示最近访问的仓库列表
+  - 当前仓库用 ✓ 标记并高亮显示
+  - 菜单底部显示 "+ Connect Another Repo" 选项
+  - 每个仓库项可 hover 显示删除按钮（×）
 - **快速切换**：点击列表中的仓库即可直接切换，无需断开连接
-- **添加新仓库**：提供"Connect Another Repo"选项，用于添加新的仓库到列表中
+- **添加新仓库**：点击 "Connect Another Repo" 触发 OAuth 流程，添加新仓库到列表
 - **持久化存储**：使用 localStorage 记录每个用户访问过的仓库列表和最后访问的仓库
+
+### UI 布局示意
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ ⚡ Super Crew  │  owner/repo ▾  │        [controls]        │
+└────────────────────────────────────────────────────────────┘
+                    ↓ Click to expand
+                ┌────────────────────────────┐
+                │ ✓ steins-z/supercrew       │ ← Current
+                │   owner/another-repo     × │ ← Hover to show ×
+                │   team/project-x         × │
+                ├────────────────────────────┤
+                │ + Connect Another Repo     │
+                └────────────────────────────┘
+```
 
 ### LocalStorage 数据结构
 
@@ -42,19 +63,27 @@ reviewers: []
 
 ### 用户体验
 
-- 自动记录：用户首次连接仓库时，自动添加到"最近访问"列表
-- 排序：按最后访问时间倒序排列，最近使用的在最上面
-- 限制数量：最多保留 10 个最近访问的仓库（可配置）
-- 当前标识：高亮显示当前正在查看的仓库
-- 移除选项：用户可以从列表中移除不再需要的仓库
+- **自动记录**：用户首次连接仓库时，自动添加到"最近访问"列表
+- **智能排序**：按最后访问时间倒序排列，最近使用的在最上面
+- **列表限制**：最多保留 10 个最近访问的仓库（超出后自动移除最旧的）
+- **当前标识**：✓ 标记 + 高亮显示当前正在查看的仓库
+- **快速移除**：hover 仓库项显示 × 按钮，点击从列表中移除（当前仓库除外）
+- **视觉一致性**：切换器和下拉菜单样式与现有 HeaderBtn 保持一致
+- **响应式交互**：hover 高亮、点击后菜单自动关闭、点击外部区域关闭菜单
 
 ### 技术要求
 
-- 使用 React hooks 管理仓库切换状态
-- localStorage 数据以 JSON 格式存储
-- 切换仓库时重新加载 Kanban 数据（branch、issues、tasks 等）
+- 创建新的 `RepoSwitcher` 组件，集成到 AppHeader
+- 使用 React hooks 管理：
+  - 下拉菜单开关状态（`useState`）
+  - 仓库列表和当前仓库（custom hook：`useRepoSwitcher`）
+  - 点击外部关闭菜单（`useEffect` + 事件监听）
+- localStorage 数据以 JSON 格式存储，key: `supercrew:recentRepos`
+- 切换仓库时：
+  - 更新 localStorage 的 `currentRepo` 和 `lastAccessed`
+  - 触发重新加载 Kanban 数据（通过 React Query 的 `refetch` 或路由刷新）
 - 保持现有的 GitHub OAuth 认证流程不变
-- 确保跨标签页同步（监听 localStorage 变化）
+- 跨标签页同步：监听 `storage` 事件，自动更新仓库列表
 
 ## Out of Scope
 
