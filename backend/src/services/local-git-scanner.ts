@@ -38,17 +38,17 @@ export class LocalGitScanner {
 
       // Filter to include:
       // 1. Local branches (no prefix)
-      // 2. Remote branches (remotes/origin/*) - strip prefix
+      // 2. Remote branches (remotes/origin/*) - keep origin/ prefix
       const branches = branchSummary.all
         .map((branch) => {
-          // Remote branch: remotes/origin/feature-name -> feature-name
+          // Remote branch: remotes/origin/feature-name -> origin/feature-name
           if (branch.startsWith('remotes/origin/')) {
-            return branch.replace('remotes/origin/', '');
+            return branch.replace('remotes/', '');
           }
           // Local branch: use as-is
           return branch;
         })
-        .filter((branch) => branch !== 'HEAD') // Skip HEAD pointer
+        .filter((branch) => branch !== 'origin/HEAD') // Skip HEAD pointer
         .filter((branch, index, self) => self.indexOf(branch) === index); // Deduplicate
 
       return branches;
