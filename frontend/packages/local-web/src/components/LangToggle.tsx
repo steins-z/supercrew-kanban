@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function LangToggle({ style }: { style?: React.CSSProperties }) {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
+  const isZh = i18n.language?.startsWith('zh') ?? false;
 
   return (
     <button
