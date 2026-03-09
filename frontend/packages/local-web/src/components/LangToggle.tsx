@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { useTranslation } from 'react-i18next';
 
 export default function LangToggle({ style }: { style?: React.CSSProperties }) {
   const { i18n } = useTranslation();
@@ -29,15 +28,8 @@ export default function LangToggle({ style }: { style?: React.CSSProperties }) {
       onMouseLeave={(e) =>
         ((e.currentTarget as HTMLElement).style.color = 'hsl(var(--text-low))')
       }
-      onMouseEnter={(e) =>
-        ((e.currentTarget as HTMLElement).style.color = 'hsl(var(--text-high))')
-      }
-      onMouseLeave={(e) =>
-        ((e.currentTarget as HTMLElement).style.color = 'hsl(var(--text-low))')
-      }
     >
       {isZh ? 'EN' : '中'}
     </button>
-  );
   );
 }
