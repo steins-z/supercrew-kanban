@@ -29,3 +29,6 @@ pnpm-lock.yaml
 
 # vercel
 .vercel
+
+# Claude Code local settings (never commit)
+.claude/
