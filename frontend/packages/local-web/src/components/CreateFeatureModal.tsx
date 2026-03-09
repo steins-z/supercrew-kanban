@@ -121,7 +121,7 @@ export default function CreateFeatureModal({
         width: '100vw',
         height: '100vh',
         background: 'rgba(0, 0, 0, 0.5)',
-        zIndex: 10000,
+        zIndex: 10001,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
