@@ -107,16 +107,127 @@ function StepSelectRepo({
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
+  // Read default path from environment variable
+  const [localRepoPath, setLocalRepoPath] = useState(
+    (import.meta as any).env?.VITE_REPO_PATH || ''
+  );
+
+  // Check if local dev mode is enabled
+  const isLocalMode = (import.meta as any).env?.VITE_DEV_MODE === 'local-git';
 
   const { data: repos, isLoading } = useQuery<GitHubRepo[]>({
     queryKey: ['github-repos'],
     queryFn: fetchUserRepos,
+    enabled: !isLocalMode, // Only fetch repos if NOT in local mode
   });
 
   const filtered = (repos ?? []).filter((r) =>
     r.full_name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Local mode UI
+  if (isLocalMode) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          paddingBottom: 4,
+        }}
+      >
+        <div>
+          <h3
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              color: '#fff',
+              margin: '0 0 4px',
+            }}
+          >
+            {t('welcome.step2.title')}
+          </h3>
+          <p
+            style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: 0 }}
+          >
+            本地开发模式 - 使用本地 Git 仓库
+          </p>
+        </div>
+
+        <div
+          style={{
+            background: 'rgba(96, 165, 250, 0.1)',
+            border: '1px solid rgba(96, 165, 250, 0.3)',
+            borderRadius: 8,
+            padding: '10px 12px',
+            fontSize: 12.5,
+            color: 'rgba(96, 165, 250, 0.9)',
+          }}
+        >
+          💡 本地模式下，将直接读取当前项目的 Git 仓库，无需 GitHub API
+        </div>
+
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 12.5,
+              color: 'rgba(255,255,255,0.6)',
+              marginBottom: 6,
+            }}
+          >
+            本地仓库路径（留空默认使用当前项目目录）
+          </label>
+          <input
+            type="text"
+            value={localRepoPath}
+            onChange={(e) => setLocalRepoPath(e.target.value)}
+            placeholder="留空或填写绝对路径 (Windows: d:\repo\my-project, Mac: /Users/you/projects/my-project)"
+            style={{
+              width: '100%',
+              padding: '9px 12px',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8,
+              color: '#fff',
+              fontSize: 13,
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        <button
+          onClick={() => {
+            // Create a mock GitHubRepo object for local mode
+            const mockRepo: GitHubRepo = {
+              id: 0,
+              full_name: localRepoPath || 'local-dev',
+              name: localRepoPath ? localRepoPath.split('/').pop() || 'local-dev' : 'local-dev',
+              owner: { login: 'local' },
+              html_url: '',
+            };
+            onSelect(mockRepo);
+          }}
+          style={{
+            width: '100%',
+            padding: '10px 16px',
+            background: 'var(--rb-accent)',
+            border: 'none',
+            borderRadius: 8,
+            color: '#000',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            marginTop: 4,
+          }}
+        >
+          使用本地仓库
+        </button>
+      </div>
+    );
+  }
+
+  // GitHub mode UI (original)
   return (
     <div
       style={{
@@ -332,11 +443,26 @@ function StepBind({
   const [status, setStatus] = useState<BindStatus>('loading');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Check if local dev mode is enabled
+  const isLocalMode = (import.meta as any).env?.VITE_DEV_MODE === 'local-git';
+
   const runBind = async () => {
     setStatus('loading');
     setErrorMsg('');
     try {
-      // Check if repo has .supercrew/tasks/
+      if (isLocalMode) {
+        // Local mode: skip API check, directly save
+        setSelectedRepo({
+          owner: repo.owner.login,
+          repo: repo.name,
+          full_name: repo.full_name,
+        });
+        setStatus('success');
+        setTimeout(onSuccess, 800);
+        return;
+      }
+
+      // GitHub mode: check if repo has .supercrew/tasks/
       const exists = await checkSupercrewExists(repo.owner.login, repo.name);
       if (!exists) {
         setStatus('error');
@@ -482,11 +608,15 @@ function WelcomePage() {
     null
   );
 
+  // Check if local dev mode is enabled
+  const isLocalMode = (import.meta as any).env?.VITE_DEV_MODE === 'local-git';
+
   useEffect(() => {
-    if (!isAuthenticated()) {
+    // Only check authentication in GitHub mode
+    if (!isLocalMode && !isAuthenticated()) {
       navigate({ to: '/login', search: { error: undefined } });
     }
-  }, []);
+  }, [isLocalMode]);
 
   return (
     <div

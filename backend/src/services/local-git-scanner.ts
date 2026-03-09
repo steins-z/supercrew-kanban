@@ -33,9 +33,25 @@ export class LocalGitScanner {
         throw new Error(`Not a git repository: ${this.repoPath}`);
       }
 
-      // Get all local branches
-      const branchSummary = await this.git.branchLocal();
-      return branchSummary.all;
+      // Get all branches (both local and remote)
+      const branchSummary = await this.git.branch(['-a']);
+
+      // Filter to include:
+      // 1. Local branches (no prefix)
+      // 2. Remote branches (remotes/origin/*) - strip prefix
+      const branches = branchSummary.all
+        .map((branch) => {
+          // Remote branch: remotes/origin/feature-name -> feature-name
+          if (branch.startsWith('remotes/origin/')) {
+            return branch.replace('remotes/origin/', '');
+          }
+          // Local branch: use as-is
+          return branch;
+        })
+        .filter((branch) => branch !== 'HEAD') // Skip HEAD pointer
+        .filter((branch, index, self) => self.indexOf(branch) === index); // Deduplicate
+
+      return branches;
     } catch (error) {
       this.errors.push({
         branch: 'all',
@@ -140,7 +156,8 @@ export class LocalGitScanner {
     try {
       // Use git show to read file content from specific branch
       const content = await this.git.show([`${branch}:${filePath}`]);
-      return content;
+      // Return as base64 to match GitHub API format
+      return Buffer.from(content, 'utf-8').toString('base64');
     } catch (error) {
       // File doesn't exist on this branch
       return null;

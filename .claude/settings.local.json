@@ -38,7 +38,13 @@
       "Bash(git add -A .supercrew/tasks/scan-all-branches/)",
       "Bash(git check-ignore -v .supercrew/tasks/scan-all-branches/meta.yaml)",
       "Bash(git push -u origin user/luna-chen/backlog-scan-all-branches)",
-      "Bash(git checkout -b user/luna-chen/scan-all-branches)"
+      "Bash(git checkout -b user/luna-chen/scan-all-branches)",
+      "Bash(pnpm install)",
+      "Bash(git add .)",
+      "Bash(git push -u origin user/luna-chen/local-dev-mode)",
+      "Bash(bun run dev)",
+      "Bash(curl -s http://localhost:3001/api/board/multi-branch?mode=local-git)",
+      "Bash(git ls-tree --name-only main:.supercrew/tasks)"
     ]
   }
 }
