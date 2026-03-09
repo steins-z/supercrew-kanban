@@ -343,18 +343,36 @@ export async function fetchBoardMultiBranch(): Promise<FeatureBoard> {
     };
   }
 
+  // Check if local dev mode is enabled (dev only via env var)
+  const isLocalMode = (import.meta as any).env?.VITE_DEV_MODE === 'local-git';
+
   const token = getAccessToken();
-  if (!token) throw new Error('Not authenticated');
+  if (!token && !isLocalMode) throw new Error('Not authenticated');
 
   // Call backend API
   const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3001';
-  const res = await fetch(`${backendUrl}/api/board/multi-branch`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'X-Repo-Owner': repo.owner,
-      'X-Repo-Name': repo.repo,
-    },
-  });
+
+  let url = '';
+  if (isLocalMode) {
+    // In local mode, pass repo path if available (stored in repo.full_name)
+    const repoPath = repo.full_name !== 'local-dev' ? repo.full_name : '';
+    url = repoPath
+      ? `${backendUrl}/api/board/multi-branch?mode=local-git&repo_path=${encodeURIComponent(repoPath)}`
+      : `${backendUrl}/api/board/multi-branch?mode=local-git`;
+  } else {
+    url = `${backendUrl}/api/board/multi-branch`;
+  }
+
+  const headers: Record<string, string> = {};
+
+  if (!isLocalMode) {
+    // GitHub mode requires auth headers
+    headers['Authorization'] = `Bearer ${token}`;
+    headers['X-Repo-Owner'] = repo.owner;
+    headers['X-Repo-Name'] = repo.repo;
+  }
+
+  const res = await fetch(url, { headers });
 
   if (!res.ok) {
     throw new Error(`Backend API error: ${res.status} ${res.statusText}`);
