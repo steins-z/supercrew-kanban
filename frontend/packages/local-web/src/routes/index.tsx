@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useBoard } from '@app/hooks/useBoard';
 import { useRepo } from '@app/hooks/useRepo';
 import type { FeatureMeta, FeaturePriority, SupercrewStatus } from '@app/types';
@@ -8,6 +8,7 @@ import SpotlightCard from '@web/components/SpotlightCard';
 import CountUp from '@web/components/CountUp';
 import ClickSpark from '@web/components/ClickSpark';
 import AnimatedCard from '@web/components/AnimatedCard';
+import CreateFeatureModal from '@web/components/CreateFeatureModal';
 
 // ─── Column config ──────────────────────────────────────────────────────────
 
@@ -40,10 +41,11 @@ const PRI_CLASS: Record<FeaturePriority, string> = {
 
 function BoardPage() {
   const { t } = useTranslation();
-  const { featuresByStatus, isLoading } = useBoard();
+  const { featuresByStatus, isLoading, refetch } = useBoard();
   const navigate = useNavigate();
   const { selectRepo } = useRepo();
   const searchParams = Route.useSearch();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Handle URL params for repo selection (from RepoSwitcher)
   useEffect(() => {
@@ -140,11 +142,21 @@ function BoardPage() {
                 onCardClick={(id) =>
                   void navigate({ to: '/features/$id', params: { id } })
                 }
+                onAddClick={col.id === 'todo' ? () => setIsCreateModalOpen(true) : undefined}
               />
             ))}
           </div>
         </ClickSpark>
       </div>
+
+      <CreateFeatureModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={() => {
+          setIsCreateModalOpen(false);
+          refetch();
+        }}
+      />
     </div>
   );
 }
@@ -156,11 +168,13 @@ function Column({
   features,
   isDark,
   onCardClick,
+  onAddClick,
 }: {
   col: { id: SupercrewStatus; name: string };
   features: FeatureMeta[];
   isDark: boolean;
   onCardClick: (id: string) => void;
+  onAddClick?: () => void;
 }) {
   const sk = getStatusKey(col.id);
 
@@ -201,6 +215,46 @@ function Column({
             />
           </span>
         </div>
+        {onAddClick && (
+          <button
+            onClick={onAddClick}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 20,
+              height: 20,
+              borderRadius: 4,
+              background: 'transparent',
+              border: '1px solid hsl(var(--_border))',
+              cursor: 'pointer',
+              color: 'hsl(var(--text-low))',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget;
+              el.style.background = 'hsl(var(--_accent))';
+              el.style.borderColor = 'hsl(var(--_accent))';
+              el.style.color = '#fff';
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget;
+              el.style.background = 'transparent';
+              el.style.borderColor = 'hsl(var(--_border))';
+              el.style.color = 'hsl(var(--text-low))';
+            }}
+            title="Create new feature"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 256 256"
+              fill="currentColor"
+            >
+              <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Card area (read-only, no drag) */}

@@ -380,3 +380,57 @@ export async function fetchBoardMultiBranch(): Promise<FeatureBoard> {
 
   return res.json();
 }
+
+// ─── Feature Creation ───────────────────────────────────────────────────────
+
+export interface CreateFeatureRequest {
+  title: string;
+  id: string;
+  priority: 'P0' | 'P1' | 'P2' | 'P3';
+  owner: string;
+  background: string;
+  requirements: string;
+  outOfScope?: string;
+}
+
+export interface CreateFeatureResponse {
+  success: boolean;
+  featureId?: string;
+  branch?: string;
+  remotePushed?: boolean;
+  error?: string;
+}
+
+export async function createFeature(data: CreateFeatureRequest): Promise<CreateFeatureResponse> {
+  const repo = getSelectedRepo();
+
+  // Check if local dev mode is enabled
+  const isLocalMode = (import.meta as { env?: { VITE_DEV_MODE?: string } }).env?.VITE_DEV_MODE === 'local-git';
+
+  const backendUrl = (import.meta as { env?: { VITE_BACKEND_URL?: string } }).env?.VITE_BACKEND_URL || 'http://localhost:3001';
+
+  let url = `${backendUrl}/api/features/create`;
+  if (isLocalMode && repo) {
+    const repoPath = repo.full_name !== 'local-dev' ? repo.full_name : '';
+    if (repoPath) {
+      url += `?mode=local-git&repo_path=${encodeURIComponent(repoPath)}`;
+    } else {
+      url += `?mode=local-git`;
+    }
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+  }
+
+  return res.json();
+}

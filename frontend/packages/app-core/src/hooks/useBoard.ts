@@ -43,5 +43,6 @@ export function useBoard() {
     featuresByStatus: board.featuresByStatus,
     isLoading,
     error,
+    refetch: () => queryClient.invalidateQueries({ queryKey }),
   };
 }
