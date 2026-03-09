@@ -2,7 +2,6 @@
 
 import { simpleGit, type SimpleGit } from 'simple-git';
 import { existsSync } from 'fs';
-import { resolve } from 'path';
 import type { FileSnapshot, BranchError } from '../types/board.js';
 
 const FEATURES_PATH = '.supercrew/tasks';
@@ -12,8 +11,10 @@ export class LocalGitScanner {
   public errors: BranchError[] = [];
 
   constructor(private repoPath: string) {
-    // Resolve to absolute path
-    this.repoPath = resolve(repoPath);
+    // Use the path as-is (user should provide absolute path)
+    this.repoPath = repoPath;
+
+    console.log('[LocalGitScanner] Using path:', this.repoPath);
 
     // Validate repo exists
     if (!existsSync(this.repoPath)) {

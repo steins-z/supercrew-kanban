@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { useBoard } from '@app/hooks/useBoard';
+import { useRepo } from '@app/hooks/useRepo';
 import type { FeatureMeta, FeaturePriority, SupercrewStatus } from '@app/types';
 import SpotlightCard from '@web/components/SpotlightCard';
 import CountUp from '@web/components/CountUp';
@@ -40,6 +42,35 @@ function BoardPage() {
   const { t } = useTranslation();
   const { featuresByStatus, isLoading } = useBoard();
   const navigate = useNavigate();
+  const { selectRepo } = useRepo();
+  const searchParams = Route.useSearch();
+
+  // Handle URL params for repo selection (from RepoSwitcher)
+  useEffect(() => {
+    const { owner, repo, repo_path, mode } = searchParams;
+
+    if (owner && repo) {
+      // GitHub mode: owner/repo params
+      selectRepo({ owner, repo, full_name: `${owner}/${repo}` });
+      // Clean up URL params (use replace to avoid history spam)
+      void navigate({
+        to: '/',
+        search: { owner: undefined, repo: undefined, repo_path: undefined, mode: undefined },
+        replace: true,
+      });
+    } else if (repo_path) {
+      // Local mode: repo_path param
+      // Use path as both owner and repo for display
+      const pathName = repo_path.split(/[/\\]/).pop() || 'local-repo';
+      selectRepo({ owner: 'local', repo: pathName, full_name: repo_path });
+      // Clean up URL params but keep mode (use replace to avoid history spam)
+      void navigate({
+        to: '/',
+        search: { owner: undefined, repo: undefined, repo_path: undefined, mode },
+        replace: true,
+      });
+    }
+  }, [searchParams, selectRepo, navigate]);
 
   const STATUS_COLUMNS = STATUS_COLUMN_IDS.map((id) => ({
     id,
@@ -383,4 +414,12 @@ function FeatureCard({
   );
 }
 
-export const Route = createFileRoute('/')({ component: BoardPage });
+export const Route = createFileRoute('/')({
+  validateSearch: (s: Record<string, unknown>) => ({
+    owner: s.owner as string | undefined,
+    repo: s.repo as string | undefined,
+    repo_path: s.repo_path as string | undefined,
+    mode: s.mode as string | undefined,
+  }),
+  component: BoardPage,
+});
