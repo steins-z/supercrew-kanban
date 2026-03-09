@@ -487,7 +487,7 @@ boardRouter.get('/sync/status', async (c) => {
       args: [],
     })
 
-    const row = result.rows[0] as { last_sync: string | null; count: number } | undefined
+    const row = result.rows[0] as unknown as { last_sync: string | null; count: number } | undefined
 
     return c.json({
       source: 'database',

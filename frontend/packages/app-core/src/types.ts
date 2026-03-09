@@ -3,7 +3,26 @@
 export type SupercrewStatus = 'todo' | 'doing' | 'ready-to-ship' | 'shipped'
 export type FeaturePriority = 'P0' | 'P1' | 'P2' | 'P3'
 export type DesignStatus = 'draft' | 'in-review' | 'approved' | 'rejected'
-export type FreshnessIndicator = 'verified' | 'realtime' | 'stale' | 'orphaned'
+
+// Sync states from backend - reflects validation states in database
+export type SyncState =
+  | 'local_only'       // Agent data, no upstream tracking
+  | 'pending_push'     // Branch not on remote yet
+  | 'pending_verify'   // Awaiting validation
+  | 'synced'           // Validated and matches Git
+  | 'conflict'         // SHA mismatch, Agent has newer timestamp
+  | 'error'            // Validation failed
+  | 'git_missing'      // Branch deleted on remote
+
+// Freshness indicators for UI - derived from sync_state
+export type FreshnessIndicator =
+  | 'verified'         // ✅ Fully validated against Git
+  | 'realtime'         // ⚡ Agent data, local-only or pending push
+  | 'pending'          // ⏳ Awaiting validation
+  | 'conflict'         // ⚠️ SHA mismatch, kept Agent data
+  | 'stale'            // 🕐 Validation error or old data
+  | 'orphaned'         // ❌ Branch deleted
+
 export type DataSource = 'git' | 'agent' | 'agent_stale' | 'agent_orphaned' | 'database'
 
 export interface FeatureMeta {
@@ -25,6 +44,10 @@ export interface FeatureMeta {
   verified_at?: string
   git_sha?: string
   freshness?: FreshnessIndicator
+  // Validation state (new)
+  sync_state?: SyncState
+  git_commit_sha?: string
+  last_git_commit_at?: number
   // Multi-branch extensions (optional for backward compatibility)
   branches?: BranchInfo[]
   primaryBranch?: string

@@ -1,7 +1,12 @@
-import type { FreshnessIndicator } from '@vibe/app-core/types'
+import type { FreshnessIndicator, SyncState } from '@vibe/app-core/types'
+import { getFreshnessIndicator, getFreshnessIcon, getFreshnessLabel } from '@vibe/app-core/utils/freshness'
 
 export interface VerificationBadgeProps {
-  freshness: FreshnessIndicator
+  // New API: pass sync_state and verified
+  syncState?: SyncState
+  verified?: boolean
+  // Legacy API: pass freshness directly
+  freshness?: FreshnessIndicator
   size?: 'sm' | 'md' | 'lg'
   showTooltip?: boolean
 }
@@ -24,8 +29,20 @@ const FRESHNESS_CONFIG: Record<FreshnessIndicator, {
     description: 'Agent-reported update (awaiting Git verification)',
     className: 'verification-badge--realtime',
   },
-  stale: {
+  pending: {
     emoji: '⏳',
+    label: 'Pending',
+    description: 'Awaiting validation',
+    className: 'verification-badge--pending',
+  },
+  conflict: {
+    emoji: '⚠️',
+    label: 'Conflict',
+    description: 'SHA mismatch, using newer Agent data',
+    className: 'verification-badge--conflict',
+  },
+  stale: {
+    emoji: '🕐',
     label: 'Stale',
     description: 'Data may be outdated, validation pending',
     className: 'verification-badge--stale',
@@ -39,11 +56,15 @@ const FRESHNESS_CONFIG: Record<FreshnessIndicator, {
 }
 
 export function VerificationBadge({
+  syncState,
+  verified,
   freshness,
   size = 'md',
   showTooltip = true,
 }: VerificationBadgeProps) {
-  const config = FRESHNESS_CONFIG[freshness]
+  // Determine freshness indicator
+  const indicator = freshness ?? getFreshnessIndicator(syncState, verified)
+  const config = FRESHNESS_CONFIG[indicator]
 
   const sizeClass = {
     sm: 'verification-badge--sm',
@@ -68,8 +89,18 @@ export function VerificationBadge({
   )
 }
 
-export function VerificationBadgeCompact({ freshness }: { freshness: FreshnessIndicator }) {
-  const config = FRESHNESS_CONFIG[freshness]
+export function VerificationBadgeCompact({
+  syncState,
+  verified,
+  freshness,
+}: {
+  syncState?: SyncState
+  verified?: boolean
+  freshness?: FreshnessIndicator
+}) {
+  // Determine freshness indicator
+  const indicator = freshness ?? getFreshnessIndicator(syncState, verified)
+  const config = FRESHNESS_CONFIG[indicator]
 
   return (
     <span
@@ -82,3 +113,4 @@ export function VerificationBadgeCompact({ freshness }: { freshness: FreshnessIn
     </span>
   )
 }
+
