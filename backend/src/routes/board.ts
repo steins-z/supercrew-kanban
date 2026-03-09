@@ -16,6 +16,40 @@ function toIso(value: unknown): string {
   return new Date(0).toISOString()
 }
 
+// ─── Token Cache ────────────────────────────────────────────────────────────
+
+/**
+ * Simple in-memory cache for GitHub tokens (keyed by repo)
+ * This allows /api/board to reuse tokens from /api/board/multi-branch calls
+ */
+const tokenCache = new Map<string, { token: string; timestamp: number }>()
+const TOKEN_CACHE_TTL = 1000 * 60 * 60 // 1 hour
+
+function cacheToken(repoOwner: string, repoName: string, token: string): void {
+  const key = `${repoOwner}/${repoName}`
+  tokenCache.set(key, { token, timestamp: Date.now() })
+  console.log(`[TokenCache] Cached token for ${key}`)
+}
+
+function getCachedToken(repoOwner: string, repoName: string): string | null {
+  const key = `${repoOwner}/${repoName}`
+  const cached = tokenCache.get(key)
+
+  if (!cached) {
+    return null
+  }
+
+  // Check if token is still valid (not expired)
+  if (Date.now() - cached.timestamp > TOKEN_CACHE_TTL) {
+    tokenCache.delete(key)
+    console.log(`[TokenCache] Token expired for ${key}`)
+    return null
+  }
+
+  console.log(`[TokenCache] Using cached token for ${key}`)
+  return cached.token
+}
+
 // ─── Helper: Sync Git snapshots to database ────────────────────────────────
 
 /**
@@ -225,9 +259,15 @@ boardRouter.get('/', async (c) => {
     if (featuresResult.rows.length === 0 && autoSync) {
       console.log('[API] Database empty, triggering Git scan + sync...')
 
-      // Get OAuth token from Authorization header (if available)
+      // Get OAuth token from:
+      // 1. Authorization header (current request)
+      // 2. Token cache (from previous multi-branch call)
+      // 3. Environment variable (fallback)
       const authHeader = c.req.header('Authorization')
-      const token = authHeader?.replace('Bearer ', '')
+      const token =
+        authHeader?.replace('Bearer ', '') ||
+        getCachedToken(repoOwner, repoName) ||
+        process.env.GITHUB_TOKEN
 
       if (token) {
         try {
@@ -522,6 +562,9 @@ boardRouter.get('/multi-branch', async (c) => {
       error: 'Missing required headers: X-Repo-Owner, X-Repo-Name'
     }, 400)
   }
+
+  // Cache the token for reuse by scanAndSyncFromGit()
+  cacheToken(owner, repo, token)
 
   // ─── Scan Branches ────────────────────────────────────────────────
 
