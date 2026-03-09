@@ -25,7 +25,7 @@ export class LocalGitScanner {
 
   // ─── Branch Discovery ──────────────────────────────────────────────────
 
-  async discoverBranches(): Promise<string[]> {
+  async discoverBranches(scanAll: boolean = true): Promise<string[]> {
     try {
       // Check if it's a valid git repository
       const isRepo = await this.git.checkIsRepo();
@@ -39,7 +39,7 @@ export class LocalGitScanner {
       // Filter to include:
       // 1. Local branches (no prefix)
       // 2. Remote branches (remotes/origin/*) - keep origin/ prefix
-      const branches = branchSummary.all
+      let branches = branchSummary.all
         .map((branch) => {
           // Remote branch: remotes/origin/feature-name -> origin/feature-name
           if (branch.startsWith('remotes/origin/')) {
@@ -50,6 +50,11 @@ export class LocalGitScanner {
         })
         .filter((branch) => branch !== 'origin/HEAD') // Skip HEAD pointer
         .filter((branch, index, self) => self.indexOf(branch) === index); // Deduplicate
+
+      // Apply pattern filter if scanAll is false
+      if (!scanAll) {
+        branches = branches.filter((branch) => branch.startsWith('feature/'));
+      }
 
       return branches;
     } catch (error) {

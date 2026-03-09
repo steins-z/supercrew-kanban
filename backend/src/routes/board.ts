@@ -26,7 +26,7 @@ boardRouter.get('/multi-branch', async (c) => {
       const localScanner = new LocalGitScanner(repoPath);
 
       // Step 1: Discover branches
-      const branches = await localScanner.discoverBranches();
+      const branches = await localScanner.discoverBranches(scanAll);
 
       if (branches.length === 0) {
         return c.json({
