@@ -6,17 +6,14 @@ import {
 } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { SquaresFourIcon, LightningIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import AppHeader from '@web/components/AppHeader';
-import Dock from '@web/components/Dock';
 import {
   isAuthenticated,
   clearToken,
   getSelectedRepo,
   clearSelectedRepo,
 } from '@vibe/app-core';
-import type { DockItemConfig } from '@web/components/Dock';
 
 const PUBLIC_PATHS = ['/login', '/oauth-callback', '/welcome'];
 
@@ -76,39 +73,10 @@ function RootLayout() {
     void navigate({ to: '/welcome' });
   }
 
-  // Show full-page layout (no dock) for public routes
+  // Show full-page layout for public routes
   if (PUBLIC_PATHS.includes(pathname)) {
     return <Outlet />;
   }
-
-  const isActive = (to: string, exact = false) =>
-    exact ? pathname === to : pathname.startsWith(to);
-
-  const iconColor = (to: string, exact = false) =>
-    isActive(to, exact) ? 'var(--rb-accent)' : 'hsl(var(--text-low))';
-
-  const iconWeight = (to: string, exact = false): 'fill' | 'regular' =>
-    isActive(to, exact) ? 'fill' : 'regular';
-
-  const dockItems: DockItemConfig[] = [
-    {
-      icon: <LightningIcon size={17} weight="fill" color="var(--rb-accent)" />,
-      label: 'Super Crew',
-      className: '',
-    },
-    {
-      icon: (
-        <SquaresFourIcon
-          size={17}
-          weight={iconWeight('/', true)}
-          color={iconColor('/', true)}
-        />
-      ),
-      label: t('nav.board'),
-      onClick: () => navigate({ to: '/' }),
-      className: isActive('/', true) ? 'dock-item-active' : '',
-    },
-  ];
 
   return (
     <div
@@ -130,25 +98,6 @@ function RootLayout() {
       <main style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         <Outlet />
       </main>
-
-      <div
-        style={{
-          flexShrink: 0,
-          height: 74,
-          position: 'relative',
-          zIndex: 10,
-          overflow: 'visible',
-        }}
-      >
-        <Dock
-          items={dockItems}
-          baseItemSize={40}
-          magnification={62}
-          panelHeight={58}
-          dockHeight={196}
-          distance={110}
-        />
-      </div>
     </div>
   );
 }
