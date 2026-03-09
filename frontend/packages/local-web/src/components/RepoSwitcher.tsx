@@ -1,18 +1,31 @@
 import { useState, useRef, useEffect } from 'react';
 import { CaretDown, Check, X, Plus } from '@phosphor-icons/react';
 import { useRepoSwitcher } from '@app/hooks/useRepoSwitcher';
+import { useRepo } from '@app/hooks/useRepo';
 
 export default function RepoSwitcher() {
-  const { currentRepo, recentRepos, switchRepo, removeRepo, isLoading } = useRepoSwitcher();
+  const { repo: currentRepo } = useRepo(); // Get current repo from useRepo
+  const { recentRepos, addRepo, removeRepo } = useRepoSwitcher();
   const [isOpen, setIsOpen] = useState(false);
+  const [hoveredRepo, setHoveredRepo] = useState<string | null>(null); // Track hovered repo by ID
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Add current repo to recent repos when it changes
+  useEffect(() => {
+    if (currentRepo) {
+      addRepo(currentRepo.owner, currentRepo.repo);
+    }
+  }, [currentRepo, addRepo]);
 
   // Click outside to close
   useEffect(() => {
     if (!isOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -23,17 +36,24 @@ export default function RepoSwitcher() {
 
   // Handle repo switching
   const handleSwitchRepo = (owner: string, repo: string) => {
-    switchRepo(owner, repo);
-    setIsOpen(false);
+    // For now, just reload the page
+    // TODO: Implement proper repo switching with React Query invalidation
+    window.location.href = `/?owner=${owner}&repo=${repo}`;
   };
 
-  const handleRemoveRepo = (e: React.MouseEvent, owner: string, repo: string) => {
+  const handleRemoveRepo = (
+    e: React.MouseEvent,
+    owner: string,
+    repo: string
+  ) => {
     e.stopPropagation();
     removeRepo(owner, repo);
   };
 
   // Display text for trigger button
-  const displayText = currentRepo ? currentRepo.full : 'Select Repository';
+  const displayText = currentRepo
+    ? `${currentRepo.owner}/${currentRepo.repo}`
+    : 'Select Repository';
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -102,15 +122,21 @@ export default function RepoSwitcher() {
 
           {/* Recent Repos List */}
           {recentRepos.map((repo) => {
-            const isCurrent = repo.owner === currentRepo?.owner && repo.repo === currentRepo?.repo;
-            const [isHovering, setIsHovering] = useState(false);
+            const repoId = `${repo.owner}/${repo.repo}`;
+            const isCurrent =
+              currentRepo &&
+              repo.owner === currentRepo.owner &&
+              repo.repo === currentRepo.repo;
+            const isHovering = hoveredRepo === repoId;
 
             return (
               <div
-                key={`${repo.owner}/${repo.repo}`}
-                onClick={() => !isCurrent && handleSwitchRepo(repo.owner, repo.repo)}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
+                key={repoId}
+                onClick={() =>
+                  !isCurrent && handleSwitchRepo(repo.owner, repo.repo)
+                }
+                onMouseEnter={() => setHoveredRepo(repoId)}
+                onMouseLeave={() => setHoveredRepo(null)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -119,13 +145,22 @@ export default function RepoSwitcher() {
                   borderRadius: 8,
                   cursor: isCurrent ? 'default' : 'pointer',
                   background: isCurrent ? 'hsl(var(--_muted))' : 'transparent',
-                  color: isCurrent ? 'hsl(var(--text-high))' : 'hsl(var(--text-low))',
+                  color: isCurrent
+                    ? 'hsl(var(--text-high))'
+                    : 'hsl(var(--text-low))',
                   fontSize: 13,
                   fontWeight: isCurrent ? 600 : 500,
                   transition: 'background 0.15s, color 0.15s',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    flex: 1,
+                  }}
+                >
                   {isCurrent && <Check size={14} weight="bold" />}
                   <span>
                     {repo.owner}/{repo.repo}
@@ -211,37 +246,6 @@ export default function RepoSwitcher() {
           >
             <Plus size={14} weight="bold" />
             <span>Connect Another Repo</span>
-          </div>
-        </div>
-      )}
-
-      {/* Loading Overlay */}
-      {isLoading && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-          }}
-        >
-          <div
-            style={{
-              padding: '16px 24px',
-              background: 'hsl(var(--_bg-secondary-default))',
-              borderRadius: 12,
-              color: 'hsl(var(--text-high))',
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
-            Switching repository...
           </div>
         </div>
       )}
