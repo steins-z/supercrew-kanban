@@ -12,7 +12,10 @@
       "Bash(git checkout --theirs frontend/packages/app-core/src/types.ts frontend/packages/app-core/src/api.ts)",
       "Bash(git add frontend/packages/app-core/src/types.ts frontend/packages/app-core/src/api.ts)",
       "Bash(git add -A)",
-      "Bash(git commit -m \"Merge branch ''main'' into feature/multi-branch-kanban:*)"
+      "Bash(git commit -m \"Merge branch ''main'' into feature/multi-branch-kanban:*)",
+      "Bash(git fetch:*)",
+      "Bash(git mv:*)",
+      "Bash(git stash:*)"
     ]
   }
 }
