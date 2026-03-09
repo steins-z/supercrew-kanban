@@ -14,7 +14,7 @@ boardRouter.get('/multi-branch', async (c) => {
   const token = c.req.header('Authorization')?.replace('Bearer ', '');
   const owner = c.req.header('X-Repo-Owner');
   const repo = c.req.header('X-Repo-Name');
-  const branchPattern = c.req.query('branch_pattern') ?? 'feature/*';
+  const scanAll = c.req.query('scan_all') !== 'false'; // default true
 
   if (!token) {
     return c.json({ error: 'Missing Authorization header' }, 401);
@@ -35,7 +35,7 @@ boardRouter.get('/multi-branch', async (c) => {
     const scanner = new BranchScanner(token, owner, repo);
 
     // Step 1: Discover branches
-    const branches = await scanner.discoverBranches(branchPattern);
+    const branches = await scanner.discoverBranches(scanAll);
 
     if (branches.length === 0) {
       return c.json({

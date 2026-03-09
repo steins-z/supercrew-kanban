@@ -13,26 +13,30 @@ export class BranchScanner {
 
   // ─── Task 1.4: Branch Discovery ───────────────────────────────────────
 
-  async discoverBranches(pattern: string = 'feature/*'): Promise<string[]> {
+  async discoverBranches(scanAll: boolean = true): Promise<string[]> {
     const branches: string[] = [];
 
     try {
-      // Fetch all refs matching pattern (e.g., "heads/feature")
-      const prefix = pattern.replace('/*', '');
-      const refs = await this.gh.getRefs(`heads/${prefix}`);
+      if (scanAll) {
+        // Fetch all branches (no pattern filtering)
+        const refs = await this.gh.getRefs('heads');
+        branches.push(...refs.map((r) => r.ref.replace('refs/heads/', '')));
+      } else {
+        // Legacy: only scan feature/* branches (kept for backwards compatibility)
+        const refs = await this.gh.getRefs('heads/feature');
+        branches.push(...refs.map((r) => r.ref.replace('refs/heads/', '')));
 
-      branches.push(...refs.map((r) => r.ref.replace('refs/heads/', '')));
+        // Always include main branch if not already present
+        if (!branches.includes('main')) {
+          branches.unshift('main');
+        }
+      }
     } catch (error) {
       this.errors.push({
-        branch: pattern,
+        branch: scanAll ? 'all branches' : 'feature/*',
         error: error instanceof Error ? error.message : String(error),
         type: 'network',
       });
-    }
-
-    // Always include main branch
-    if (!branches.includes('main')) {
-      branches.unshift('main');
     }
 
     return branches;
