@@ -21,11 +21,7 @@ export default function RepoSwitcher() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // If no current repo, don't render
-  if (!currentRepo) {
-    return null;
-  }
-
+  // Handle repo switching
   const handleSwitchRepo = (owner: string, repo: string) => {
     switchRepo(owner, repo);
     setIsOpen(false);
@@ -35,6 +31,9 @@ export default function RepoSwitcher() {
     e.stopPropagation();
     removeRepo(owner, repo);
   };
+
+  // Display text for trigger button
+  const displayText = currentRepo ? currentRepo.full : 'Select Repository';
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -67,7 +66,7 @@ export default function RepoSwitcher() {
           el.style.color = 'hsl(var(--text-low))';
         }}
       >
-        <span>{currentRepo.full}</span>
+        <span>{displayText}</span>
         <CaretDown size={12} weight="bold" />
       </button>
 
@@ -87,6 +86,20 @@ export default function RepoSwitcher() {
             padding: 8,
           }}
         >
+          {/* Empty State */}
+          {recentRepos.length === 0 && (
+            <div
+              style={{
+                padding: '16px 12px',
+                textAlign: 'center',
+                color: 'hsl(var(--text-low))',
+                fontSize: 13,
+              }}
+            >
+              No repositories yet
+            </div>
+          )}
+
           {/* Recent Repos List */}
           {recentRepos.map((repo) => {
             const isCurrent = repo.owner === currentRepo?.owner && repo.repo === currentRepo?.repo;
