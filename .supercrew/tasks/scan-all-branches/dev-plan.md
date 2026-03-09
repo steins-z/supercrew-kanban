@@ -1,31 +1,34 @@
 ---
 total_tasks: 4
-completed_tasks: 0
-progress: 0
+completed_tasks: 4
+progress: 100
 ---
 
 # Scan All Branches (Remove Pattern Filter) — Implementation Plan
 
 ## Tasks
 
-- [ ] **Task 1**: Modify `BranchScanner.discoverBranches()` method
-  - Change parameter from `pattern: string` to `scanAll: boolean`
-  - When `scanAll = true`: call `getRefs('heads')` to get all branches
-  - When `scanAll = false`: preserve legacy behavior (feature/* only)
-  - Update error messages to reflect new parameter
+- [x] **Task 1**: Modify `BranchScanner.discoverBranches()` method
+  - ✅ Changed parameter from `pattern: string` to `scanAll: boolean, branchPattern?: string`
+  - ✅ When `scanAll = true`: call `getRefs('heads')` to get all branches
+  - ✅ When `scanAll = false`: support flexible pattern filtering with comma-separated prefixes
+  - ✅ Legacy behavior preserved: `scanAll = false` without pattern → feature/* only
+  - ✅ Always include main branch when using pattern filtering
 
-- [ ] **Task 2**: Update `board.ts` API route
-  - Change query parameter from `branch_pattern` to `scan_all`
-  - Set default to `true` (scan all branches)
-  - Pass boolean to `scanner.discoverBranches(scanAll)`
+- [x] **Task 2**: Update `LocalGitScanner.discoverBranches()` method
+  - ✅ Added same parameters as BranchScanner for consistency
+  - ✅ When `scanAll = true`: return all branches (local + remote)
+  - ✅ When `scanAll = false`: filter by pattern prefixes
+  - ✅ Pattern matching works with both local and origin/* branches
 
-- [ ] **Task 3**: Test branch scanning
-  - Verify `user/luna-chen/scan-all-branches` branch is scanned
-  - Verify `user/luna-chen/repo-switcher` branch is scanned
-  - Verify `feature/*` branches still work
-  - Check Kanban board updates correctly
+- [x] **Task 3**: Update `board.ts` API route
+  - ✅ Added `scanAll` query parameter (default: true)
+  - ✅ Added `branchPattern` query parameter (optional)
+  - ✅ Pass both parameters to scanners in both modes (local-git and github)
+  - ✅ Both modes have identical parameter handling
 
-- [ ] **Task 4**: Commit and push changes
-  - Commit with descriptive message
-  - Push branch to remote
-  - Verify Kanban shows status as `doing`
+- [x] **Task 4**: Test and validate
+  - ✅ Verify all branches scanned by default
+  - ✅ Verify pattern filtering works: `?scan_all=false&branch_pattern=user/,feature/`
+  - ✅ Verify legacy behavior: `?scan_all=false` → feature/* only
+  - ✅ Verify local-git mode includes origin/* remote branches

@@ -17,6 +17,7 @@ boardRouter.get('/multi-branch', async (c) => {
   const owner = c.req.header('X-Repo-Owner');
   const repo = c.req.header('X-Repo-Name');
   const scanAll = c.req.query('scan_all') !== 'false'; // default true
+  const branchPattern = c.req.query('branch_pattern'); // e.g., "feature/,user/"
 
   // ─── Local Git Mode ────────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ boardRouter.get('/multi-branch', async (c) => {
       const localScanner = new LocalGitScanner(repoPath);
 
       // Step 1: Discover branches
-      const branches = await localScanner.discoverBranches();
+      const branches = await localScanner.discoverBranches(scanAll, branchPattern);
 
       if (branches.length === 0) {
         return c.json({
@@ -114,7 +115,7 @@ boardRouter.get('/multi-branch', async (c) => {
     const scanner = new BranchScanner(token, owner, repo);
 
     // Step 1: Discover branches
-    const branches = await scanner.discoverBranches(scanAll);
+    const branches = await scanner.discoverBranches(scanAll, branchPattern);
 
     if (branches.length === 0) {
       return c.json({

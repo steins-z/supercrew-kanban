@@ -13,7 +13,7 @@ export class BranchScanner {
 
   // ─── Task 1.4: Branch Discovery ───────────────────────────────────────
 
-  async discoverBranches(scanAll: boolean = true): Promise<string[]> {
+  async discoverBranches(scanAll: boolean = true, branchPattern?: string): Promise<string[]> {
     const branches: string[] = [];
 
     try {
@@ -22,9 +22,19 @@ export class BranchScanner {
         const refs = await this.gh.getRefs('heads');
         branches.push(...refs.map((r) => r.ref.replace('refs/heads/', '')));
       } else {
-        // Legacy: only scan feature/* branches (kept for backwards compatibility)
-        const refs = await this.gh.getRefs('heads/feature');
-        branches.push(...refs.map((r) => r.ref.replace('refs/heads/', '')));
+        // Pattern-based filtering
+        const pattern = branchPattern || 'feature/';
+        const patterns = pattern.split(',').map((p) => p.trim());
+
+        // Fetch branches for each pattern
+        for (const p of patterns) {
+          try {
+            const refs = await this.gh.getRefs(`heads/${p}`);
+            branches.push(...refs.map((r) => r.ref.replace('refs/heads/', '')));
+          } catch (error) {
+            // Pattern might not match any branches, continue with next pattern
+          }
+        }
 
         // Always include main branch if not already present
         if (!branches.includes('main')) {
@@ -33,7 +43,7 @@ export class BranchScanner {
       }
     } catch (error) {
       this.errors.push({
-        branch: scanAll ? 'all branches' : 'feature/*',
+        branch: scanAll ? 'all branches' : branchPattern || 'feature/*',
         error: error instanceof Error ? error.message : String(error),
         type: 'network',
       });
