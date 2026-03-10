@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { tanstackRouter } from '@tanstack/router-plugin/vite'
-import path from 'path'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import path from 'path';
 
 export default defineConfig({
   publicDir: path.resolve(__dirname, '../public'),
@@ -38,4 +38,4 @@ export default defineConfig({
     },
   },
   build: { sourcemap: true },
-})
+});

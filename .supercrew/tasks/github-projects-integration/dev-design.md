@@ -3,63 +3,13 @@ status: draft
 reviewers: []
 ---
 
-# GitHub Projects Integration
+# GitHub Projects Integration — Technical Design
 
-## Background
+## Design Decisions
 
-Team-wise project management requires tracking work across users and AI agents, with visibility into commits, PRs, and task progress. Rather than building a custom database (duplicating GitHub Projects, ADO, Linear), we integrate supercrew with GitHub Projects to leverage:
+<!-- Key architectural and implementation decisions -->
 
-- Existing kanban boards and issue tracking
-- Native PR/commit linkage
-- Team collaboration (assignees, labels, milestones)
-- GitHub's mature API and ecosystem
-
-## Problem Statement
-
-Current supercrew plugin tracks features in `.supercrew/features/` as local files. This works for individual developers but lacks:
-
-1. **Team visibility** — no shared dashboard across contributors
-2. **Agent tracking** — no way to see which agent worked on what
-3. **Metrics aggregation** — can't query "all P0 issues" or "tasks by assignee"
-4. **PR linkage** — manual process to connect features to PRs
-
-## Requirements
-
-### Functional Requirements
-
-1. **Sync supercrew features → GitHub Issues**
-   - Each `.supercrew/features/<id>/` maps to a GitHub Issue
-   - `meta.yaml` fields map to issue metadata (labels, assignees, milestones)
-   - `design.md` content becomes issue description
-   - Status changes (`planning` → `active` → `done`) update issue state
-
-2. **Sync GitHub Issues → supercrew features**
-   - Issues created in GitHub Projects can generate local feature folders
-   - Bidirectional sync keeps both in sync
-
-3. **Track work sessions per user/agent**
-   - When an agent starts work, log session to issue comment or custom field
-   - Track: session start/end, commits made, files changed, branch name
-   - Support multiple concurrent sessions (different agents on same issue)
-
-4. **PR linkage**
-   - Auto-link PRs to issues via branch naming (`feature/<id>`)
-   - Show PR status in supercrew context
-
-5. **Team dashboard (via GitHub Projects)**
-   - Use GitHub Projects board for kanban view
-   - Custom fields for: priority (P0-P3), progress %, agent sessions
-   - Filter views by assignee, priority, status
-
-### Non-Functional Requirements
-
-- **Offline-first**: Local files remain source of truth; sync when online
-- **Incremental**: Don't require full GitHub Projects setup to use supercrew
-- **Backward compatible**: Existing `.supercrew/features/` workflows unchanged
-
-## Design
-
-### Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -85,32 +35,32 @@ Current supercrew plugin tracks features in `.supercrew/features/` as local file
 │  .supercrew/features/                                           │
 │  ├── feature-a/                                                 │
 │  │   ├── meta.yaml  ←──────────────────→  Issue metadata        │
-│  │   ├── design.md  ←──────────────────→  Issue description     │
-│  │   ├── plan.md    ←──────────────────→  Task list (checkbox)  │
-│  │   └── log.md     ←──────────────────→  Issue comments        │
+│  │   ├── dev-design.md  ←───────────────→  Issue description    │
+│  │   ├── dev-plan.md    ←───────────────→  Task list (checkbox) │
+│  │   └── dev-log.md     ←───────────────→  Issue comments       │
 │  └── feature-b/                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Data Mapping
+## Data Mapping
 
 | supercrew | GitHub Issue |
 |-----------|--------------|
 | `meta.yaml: id` | Issue number (stored in meta after creation) |
 | `meta.yaml: title` | Issue title |
-| `meta.yaml: status` | Issue state + label (`status:planning`, etc.) |
+| `meta.yaml: status` | Issue state + label (`status:todo`, etc.) |
 | `meta.yaml: priority` | Label (`priority:P0`, etc.) |
 | `meta.yaml: owner` | Issue assignee |
-| `design.md` | Issue body (markdown) |
-| `plan.md` tasks | Issue task list (checkboxes in body) |
-| `log.md` entries | Issue comments (timestamped) |
+| `dev-design.md` | Issue body (markdown) |
+| `dev-plan.md` tasks | Issue task list (checkboxes in body) |
+| `dev-log.md` entries | Issue comments (timestamped) |
 
-### New meta.yaml Fields
+## New meta.yaml Fields
 
 ```yaml
 id: feature-id
 title: "Feature Title"
-status: planning
+status: todo
 owner: "username"
 priority: P1
 # --- New fields for GitHub sync ---
@@ -121,7 +71,7 @@ github:
   last_synced: "2026-03-04T12:00:00Z"
 sessions:                    # Work sessions (appended by agents)
   - agent: "claude-opus-4-6"
-    branch: "feature/feature-id"
+    branch: "user/steins-z/feature-id"
     started: "2026-03-04T10:00:00Z"
     ended: "2026-03-04T11:30:00Z"
     commits: ["abc123", "def456"]
@@ -130,7 +80,7 @@ sessions:                    # Work sessions (appended by agents)
     lines_removed: 45
 ```
 
-### Supercrew Plugin Changes
+## Supercrew Plugin Changes
 
 1. **New skill: `sync-github`**
    - Push local feature to GitHub Issue
@@ -147,7 +97,7 @@ sessions:                    # Work sessions (appended by agents)
 4. **New command: `/supercrew:link-github <issue-url>`**
    - Link existing feature to existing GitHub Issue
 
-### API Usage
+## API Usage
 
 Using GitHub GraphQL API for Projects v2:
 
@@ -158,7 +108,7 @@ mutation {
     repositoryId: "..."
     title: "Feature Title"
     body: "..."
-    labelIds: ["priority:P1", "status:planning"]
+    labelIds: ["priority:P1", "status:todo"]
     assigneeIds: ["..."]
   }) {
     issue { number url }
@@ -176,16 +126,9 @@ mutation {
 }
 ```
 
-## Out of Scope
-
-- **Real-time agent orchestration** — no live streaming of agent output (use vibe-kanban if needed)
-- **Custom web UI** — rely on GitHub Projects UI
-- **Non-GitHub providers** — ADO, GitLab, Jira integration deferred
-- **Automated agent assignment** — manual assignment only for v1
-
 ## Open Questions
 
-1. Should `log.md` entries sync as issue comments, or stay local-only?
+1. Should `dev-log.md` entries sync as issue comments, or stay local-only?
 2. How to handle conflicts when both local and remote changed?
 3. Should we support multiple repos per feature (monorepo case)?
 

@@ -7,8 +7,8 @@ export default function AnimatedCard({
   children,
   index,
 }: {
-  children: React.ReactNode
-  index: number
+  children: React.ReactNode;
+  index: number;
 }) {
   return (
     <div
@@ -17,5 +17,5 @@ export default function AnimatedCard({
     >
       {children}
     </div>
-  )
+  );
 }

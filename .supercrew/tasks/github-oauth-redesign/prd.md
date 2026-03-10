@@ -31,10 +31,6 @@ Streamline the GitHub sign-in flow, add a quick repo switcher in the header, and
 - Remember user preferences (theme, language) per-account
 - Graceful handling of expired tokens
 
-## Design
-
-<!-- To be refined during brainstorming -->
-
 ## Out of Scope
 
 <!-- To be defined -->

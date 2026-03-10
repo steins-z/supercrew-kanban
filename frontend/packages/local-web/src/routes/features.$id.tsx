@@ -1,83 +1,124 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
-import { ArrowLeftIcon } from '@phosphor-icons/react'
-import { fetchFeature, fetchFeatureDesign, fetchFeaturePlan } from '@app/api'
-import type { Feature, SupercrewStatus, DesignStatus } from '@app/types'
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { ArrowLeftIcon } from '@phosphor-icons/react';
+import Markdown from 'react-markdown';
+import {
+  fetchFeature,
+  fetchFeatureDesign,
+  fetchFeaturePlan,
+  fetchFeaturePrd,
+} from '@app/api';
+import type { Feature, SupercrewStatus, DesignStatus } from '@app/types';
 
 export const Route = createFileRoute('/features/$id')({
   component: FeatureDetailPage,
-})
+});
 
 /* ─── Status helpers ────────────────────────────────────────────────────────── */
 
 const STATUS_COLOR: Record<SupercrewStatus, string> = {
-  todo:            '#3b82f6',
-  doing:           '#f59e0b',
+  todo: '#3b82f6',
+  doing: '#f59e0b',
   'ready-to-ship': '#8b5cf6',
-  shipped:         '#10b981',
-}
+  shipped: '#10b981',
+};
 
 const DESIGN_STATUS_COLOR: Record<DesignStatus, string> = {
   draft: '#9ca3af',
   'in-review': '#60a5fa',
   approved: '#34d399',
   rejected: '#f87171',
-}
+};
 
 const PRIORITY_COLOR: Record<string, string> = {
   P0: '#ef4444',
   P1: '#f59e0b',
   P2: '#3b82f6',
   P3: '#9ca3af',
-}
+};
 
 /* ─── Page ──────────────────────────────────────────────────────────────────── */
 
 function FeatureDetailPage() {
-  const { id } = Route.useParams()
-  const navigate = useNavigate()
-  const { t } = useTranslation()
-  const [tab, setTab] = useState<'overview' | 'design' | 'plan'>('overview')
+  const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [tab, setTab] = useState<'overview' | 'prd' | 'design' | 'plan'>(
+    'overview'
+  );
 
-  const { data: feature, isLoading, error } = useQuery({
+  const {
+    data: feature,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['feature', id],
     queryFn: () => fetchFeature(id),
-  })
+  });
+
+  const { data: prdDoc } = useQuery({
+    queryKey: ['feature-prd', id],
+    queryFn: () => fetchFeaturePrd(id),
+    enabled: tab === 'prd',
+  });
 
   const { data: designDoc } = useQuery({
     queryKey: ['feature-design', id],
     queryFn: () => fetchFeatureDesign(id),
     enabled: tab === 'design',
-  })
+  });
 
   const { data: planDoc } = useQuery({
     queryKey: ['feature-plan', id],
     queryFn: () => fetchFeaturePlan(id),
     enabled: tab === 'plan',
-  })
+  });
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#94a3b8' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
+          color: '#94a3b8',
+        }}
+      >
         {t('common.loading', 'Loading…')}
       </div>
-    )
+    );
   }
 
   if (error || !feature) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#f87171' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
+          color: '#f87171',
+        }}
+      >
         {t('common.error', 'Failed to load feature')}
       </div>
-    )
+    );
   }
 
-  const meta = feature.meta
+  const meta = feature.meta;
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       {/* Header */}
       <div
         style={{
@@ -107,10 +148,20 @@ function FeatureDetailPage() {
 
         <Badge color={STATUS_COLOR[meta.status]}>{meta.status}</Badge>
         {meta.priority && (
-          <Badge color={PRIORITY_COLOR[meta.priority] ?? '#9ca3af'}>{meta.priority}</Badge>
+          <Badge color={PRIORITY_COLOR[meta.priority] ?? '#9ca3af'}>
+            {meta.priority}
+          </Badge>
         )}
 
-        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#e2e8f0', flex: 1 }}>
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 18,
+            fontWeight: 600,
+            color: '#e2e8f0',
+            flex: 1,
+          }}
+        >
           {meta.title}
         </h1>
       </div>
@@ -124,7 +175,7 @@ function FeatureDetailPage() {
           background: 'rgba(30,41,59,0.4)',
         }}
       >
-        {(['overview', 'design', 'plan'] as const).map((t2) => (
+        {(['overview', 'prd', 'design', 'plan'] as const).map((t2) => (
           <button
             key={t2}
             onClick={() => setTab(t2)}
@@ -132,7 +183,8 @@ function FeatureDetailPage() {
               padding: '10px 20px',
               background: 'none',
               border: 'none',
-              borderBottom: tab === t2 ? '2px solid #60a5fa' : '2px solid transparent',
+              borderBottom:
+                tab === t2 ? '2px solid #60a5fa' : '2px solid transparent',
               color: tab === t2 ? '#e2e8f0' : '#64748b',
               cursor: 'pointer',
               fontWeight: tab === t2 ? 600 : 400,
@@ -148,21 +200,29 @@ function FeatureDetailPage() {
       {/* Tab content */}
       <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
         {tab === 'overview' && <OverviewTab feature={feature} />}
+        {tab === 'prd' && <MarkdownBody md={prdDoc?.body} />}
         {tab === 'design' && <MarkdownBody md={designDoc?.body} />}
         {tab === 'plan' && <MarkdownBody md={planDoc?.body} />}
       </div>
     </div>
-  )
+  );
 }
 
 /* ─── Overview Tab ──────────────────────────────────────────────────────────── */
 
 function OverviewTab({ feature }: { feature: Feature }) {
-  const { t } = useTranslation()
-  const meta = feature.meta
+  const { t } = useTranslation();
+  const meta = feature.meta;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 720 }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 20,
+        maxWidth: 720,
+      }}
+    >
       {/* Basic info */}
       <Section title={t('feature.overview.basic', 'Basic Info')}>
         <PropGrid>
@@ -171,17 +231,23 @@ function OverviewTab({ feature }: { feature: Feature }) {
           </PropCell>
           {meta.priority && (
             <PropCell label={t('feature.fields.priority', 'Priority')}>
-              <Badge color={PRIORITY_COLOR[meta.priority] ?? '#9ca3af'}>{meta.priority}</Badge>
+              <Badge color={PRIORITY_COLOR[meta.priority] ?? '#9ca3af'}>
+                {meta.priority}
+              </Badge>
             </PropCell>
           )}
           {meta.owner && (
-            <PropCell label={t('feature.fields.owner', 'Owner')}>{meta.owner}</PropCell>
+            <PropCell label={t('feature.fields.owner', 'Owner')}>
+              {meta.owner}
+            </PropCell>
           )}
           {meta.tags && meta.tags.length > 0 && (
             <PropCell label={t('feature.fields.tags', 'Tags')}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {meta.tags.map((tag) => (
-                  <Badge key={tag} color="#475569">{tag}</Badge>
+                  <Badge key={tag} color="#475569">
+                    {tag}
+                  </Badge>
                 ))}
               </div>
             </PropCell>
@@ -199,7 +265,9 @@ function OverviewTab({ feature }: { feature: Feature }) {
               </PropCell>
             )}
             {meta.target_release && (
-              <PropCell label={t('feature.fields.targetRelease', 'Target Release')}>
+              <PropCell
+                label={t('feature.fields.targetRelease', 'Target Release')}
+              >
                 {meta.target_release}
               </PropCell>
             )}
@@ -217,15 +285,18 @@ function OverviewTab({ feature }: { feature: Feature }) {
         <Section title={t('feature.overview.design', 'Design')}>
           <PropGrid>
             <PropCell label={t('feature.fields.designStatus', 'Design Status')}>
-              <Badge color={DESIGN_STATUS_COLOR[feature.design.status] ?? '#9ca3af'}>
+              <Badge
+                color={DESIGN_STATUS_COLOR[feature.design.status] ?? '#9ca3af'}
+              >
                 {feature.design.status}
               </Badge>
             </PropCell>
-            {feature.design.reviewers && feature.design.reviewers.length > 0 && (
-              <PropCell label={t('feature.fields.reviewers', 'Reviewers')}>
-                {feature.design.reviewers.join(', ')}
-              </PropCell>
-            )}
+            {feature.design.reviewers &&
+              feature.design.reviewers.length > 0 && (
+                <PropCell label={t('feature.fields.reviewers', 'Reviewers')}>
+                  {feature.design.reviewers.join(', ')}
+                </PropCell>
+              )}
           </PropGrid>
         </Section>
       )}
@@ -263,40 +334,75 @@ function OverviewTab({ feature }: { feature: Feature }) {
         </Section>
       )}
     </div>
-  )
+  );
 }
 
 /* ─── Shared components ─────────────────────────────────────────────────────── */
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <h3
+        style={{
+          margin: '0 0 12px',
+          fontSize: 15,
+          fontWeight: 600,
+          color: '#94a3b8',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}
+      >
         {title}
       </h3>
       {children}
     </div>
-  )
+  );
 }
 
 function PropGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+        gap: 12,
+      }}
+    >
       {children}
     </div>
-  )
+  );
 }
 
-function PropCell({ label, children }: { label: string; children: React.ReactNode }) {
+function PropCell({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
+        {label}
+      </span>
       <span style={{ fontSize: 14, color: '#e2e8f0' }}>{children}</span>
     </div>
-  )
+  );
 }
 
-function Badge({ color, children }: { color: string; children: React.ReactNode }) {
+function Badge({
+  color,
+  children,
+}: {
+  color: string;
+  children: React.ReactNode;
+}) {
   return (
     <span
       style={{
@@ -313,33 +419,59 @@ function Badge({ color, children }: { color: string; children: React.ReactNode }
     >
       {children}
     </span>
-  )
+  );
 }
 
 function MarkdownBody({ md }: { md?: string }) {
   if (!md) {
-    return <EmptyState />
+    return <EmptyState />;
   }
   return (
     <div
+      className="markdown-body"
       style={{
         color: '#cbd5e1',
         lineHeight: 1.8,
         fontSize: 14,
-        whiteSpace: 'pre-wrap',
         maxWidth: 720,
       }}
     >
-      {md}
+      <style>{`
+        .markdown-body h1 { font-size: 1.5em; font-weight: 600; margin: 1em 0 0.5em; color: #e2e8f0; }
+        .markdown-body h2 { font-size: 1.25em; font-weight: 600; margin: 1em 0 0.5em; color: #e2e8f0; }
+        .markdown-body h3 { font-size: 1.1em; font-weight: 600; margin: 1em 0 0.5em; color: #e2e8f0; }
+        .markdown-body p { margin: 0.5em 0; }
+        .markdown-body ul, .markdown-body ol { margin: 0.5em 0; padding-left: 1.5em; }
+        .markdown-body li { margin: 0.25em 0; }
+        .markdown-body code { background: rgba(255,255,255,0.1); padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em; }
+        .markdown-body pre { background: rgba(0,0,0,0.3); padding: 1em; border-radius: 6px; overflow-x: auto; }
+        .markdown-body pre code { background: none; padding: 0; }
+        .markdown-body blockquote { border-left: 3px solid #475569; margin: 0.5em 0; padding-left: 1em; color: #94a3b8; }
+        .markdown-body a { color: #60a5fa; text-decoration: none; }
+        .markdown-body a:hover { text-decoration: underline; }
+        .markdown-body hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1em 0; }
+        .markdown-body table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
+        .markdown-body th, .markdown-body td { border: 1px solid rgba(255,255,255,0.1); padding: 0.5em; text-align: left; }
+        .markdown-body th { background: rgba(255,255,255,0.05); }
+      `}</style>
+      <Markdown>{md}</Markdown>
     </div>
-  )
+  );
 }
 
 function EmptyState() {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200, color: '#475569' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 200,
+        color: '#475569',
+      }}
+    >
       {t('common.empty', 'No content yet')}
     </div>
-  )
+  );
 }

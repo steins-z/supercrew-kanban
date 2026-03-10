@@ -1,4 +1,4 @@
-// GitHub API client for reading .supercrew/features/
+// GitHub API client for reading .supercrew/tasks/
 
 import type {
   FeatureMeta,
@@ -23,11 +23,14 @@ function ghHeaders() {
 
 async function ghFetch<T>(path: string): Promise<T | null> {
   const res = await fetch(`${GH_API}${path}`, { headers: ghHeaders() });
+  const res = await fetch(`${GH_API}${path}`, { headers: ghHeaders() });
   if (res.status === 401) {
     clearToken();
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
+  if (!res.ok) return null;
+  return res.json() as Promise<T>;
   if (!res.ok) return null;
   return res.json() as Promise<T>;
 }
@@ -43,7 +46,15 @@ function parseFrontmatter(content: string): {
 } {
   const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!match) return { data: {}, body: content };
+function parseFrontmatter(content: string): {
+  data: Record<string, any>;
+  body: string;
+} {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!match) return { data: {}, body: content };
 
+  const yamlStr = match[1];
+  const body = match[2].trim();
   const yamlStr = match[1];
   const body = match[2].trim();
 
@@ -69,6 +80,11 @@ function parseFrontmatter(content: string): {
       (value.startsWith("'") && value.endsWith("'"))
     ) {
       value = value.slice(1, -1);
+    else if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
     }
     // Handle numbers
     else if (!isNaN(Number(value)) && value !== "") {
@@ -76,8 +92,10 @@ function parseFrontmatter(content: string): {
     }
 
     data[key] = value;
+    data[key] = value;
   }
 
+  return { data, body };
   return { data, body };
 }
 
@@ -110,6 +128,8 @@ function parseYaml(content: string): Record<string, any> {
 
     const key = trimmed.slice(0, colonIdx).trim();
     const value = trimmed.slice(colonIdx + 1).trim();
+    const key = trimmed.slice(0, colonIdx).trim();
+    const value = trimmed.slice(colonIdx + 1).trim();
 
     // Start of array
     if (value === "" || value === "[]") {
@@ -140,13 +160,16 @@ function parseYaml(content: string): Record<string, any> {
       parsed = Number(value);
     }
     data[key] = parsed;
+    data[key] = parsed;
   }
 
   // Handle trailing array
   if (inArray) {
     data[currentKey] = arrayItems;
+    data[currentKey] = arrayItems;
   }
 
+  return data;
   return data;
 }
 
@@ -160,14 +183,21 @@ export interface RepoInfo {
   owner: string;
   repo: string;
   full_name: string;
+  owner: string;
+  repo: string;
+  full_name: string;
 }
 
 export function getSelectedRepo(): RepoInfo | null {
   const stored = localStorage.getItem(REPO_KEY);
   if (!stored) return null;
+  const stored = localStorage.getItem(REPO_KEY);
+  if (!stored) return null;
   try {
     return JSON.parse(stored);
+    return JSON.parse(stored);
   } catch {
+    return null;
     return null;
   }
 }
@@ -175,18 +205,26 @@ export function getSelectedRepo(): RepoInfo | null {
 // Internal - use setSelectedRepo from useRepo hook instead
 function _setSelectedRepo(repo: RepoInfo) {
   localStorage.setItem(REPO_KEY, JSON.stringify(repo));
+  localStorage.setItem(REPO_KEY, JSON.stringify(repo));
 }
 
 // Re-export for internal use by useRepo hook
 export { _setSelectedRepo as setSelectedRepoInternal };
+export { _setSelectedRepo as setSelectedRepoInternal };
 
 export function clearSelectedRepo() {
+  localStorage.removeItem(REPO_KEY);
   localStorage.removeItem(REPO_KEY);
 }
 
 // ─── GitHub Repos ───────────────────────────────────────────────────────────
 
 export interface GitHubRepo {
+  id: number;
+  full_name: string;
+  name: string;
+  owner: { login: string };
+  html_url: string;
   id: number;
   full_name: string;
   name: string;
@@ -216,8 +254,13 @@ export async function checkSupercrewExists(
 export async function fetchFeatures(): Promise<FeatureMeta[]> {
   const repo = getSelectedRepo();
   if (!repo) return [];
+  const repo = getSelectedRepo();
+  if (!repo) return [];
 
   const dirs = await ghFetch<{ name: string; type: string }[]>(
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}`,
+  );
+  if (!dirs) return [];
     `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}`,
   );
   if (!dirs) return [];
@@ -232,12 +275,18 @@ export async function fetchFeatures(): Promise<FeatureMeta[]> {
 async function fetchFeatureMeta(id: string): Promise<FeatureMeta | null> {
   const repo = getSelectedRepo();
   if (!repo) return null;
+  const repo = getSelectedRepo();
+  if (!repo) return null;
 
   const file = await ghFetch<{ content: string }>(
     `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/meta.yaml`,
   );
   if (!file) return null;
+    `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/meta.yaml`,
+  );
+  if (!file) return null;
 
+  const raw = parseYaml(decodeContent(file.content));
   const raw = parseYaml(decodeContent(file.content));
   return {
     id: raw.id ?? id,
@@ -252,9 +301,12 @@ async function fetchFeatureMeta(id: string): Promise<FeatureMeta | null> {
     tags: raw.tags ?? [],
     blocked_by: raw.blocked_by ?? [],
   } as FeatureMeta;
+  } as FeatureMeta;
 }
 
 export async function fetchFeature(id: string): Promise<Feature | null> {
+  const meta = await fetchFeatureMeta(id);
+  if (!meta) return null;
   const meta = await fetchFeatureMeta(id);
   if (!meta) return null;
 
@@ -267,6 +319,7 @@ export async function fetchFeature(id: string): Promise<Feature | null> {
     meta,
     design: design ?? undefined,
     plan: plan ?? undefined,
+  };
   };
 }
 
@@ -282,6 +335,7 @@ export async function fetchFeatureDesign(
   if (!file) return null;
 
   const { data, body } = parseFrontmatter(decodeContent(file.content));
+  const { data, body } = parseFrontmatter(decodeContent(file.content));
   return {
     status: data.status ?? "draft",
     reviewers: data.reviewers ?? [],
@@ -293,6 +347,8 @@ export async function fetchFeatureDesign(
 export async function fetchFeaturePlan(id: string): Promise<PlanDoc | null> {
   const repo = getSelectedRepo();
   if (!repo) return null;
+  const repo = getSelectedRepo();
+  if (!repo) return null;
 
   const file = await ghFetch<{ content: string }>(
     `/repos/${repo.owner}/${repo.repo}/contents/${FEATURES_PATH}/${id}/plan.md`,
@@ -300,21 +356,25 @@ export async function fetchFeaturePlan(id: string): Promise<PlanDoc | null> {
   if (!file) return null;
 
   const { data, body } = parseFrontmatter(decodeContent(file.content));
+  const { data, body } = parseFrontmatter(decodeContent(file.content));
   return {
     total_tasks: data.total_tasks ?? 0,
     completed_tasks: data.completed_tasks ?? 0,
     progress: data.progress ?? 0,
     body,
   };
+  };
 }
 
 export async function fetchBoard(): Promise<FeatureBoard> {
+  const features = await fetchFeatures();
   const features = await fetchFeatures();
   const featuresByStatus: Record<SupercrewStatus, FeatureMeta[]> = {
     todo: [],
     doing: [],
     "ready-to-ship": [],
     shipped: [],
+  };
   };
 
   for (const f of features) {

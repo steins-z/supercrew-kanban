@@ -1,8 +1,8 @@
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next';
 
 export default function LangToggle({ style }: { style?: React.CSSProperties }) {
-  const { i18n } = useTranslation()
-  const isZh = i18n.language.startsWith('zh')
+  const { i18n } = useTranslation();
+  const isZh = i18n.language?.startsWith('zh') ?? false;
 
   return (
     <button
@@ -22,10 +22,14 @@ export default function LangToggle({ style }: { style?: React.CSSProperties }) {
         fontFamily: 'Instrument Sans, sans-serif',
         ...style,
       }}
-      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = 'hsl(var(--text-high))')}
-      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = 'hsl(var(--text-low))')}
+      onMouseEnter={(e) =>
+        ((e.currentTarget as HTMLElement).style.color = 'hsl(var(--text-high))')
+      }
+      onMouseLeave={(e) =>
+        ((e.currentTarget as HTMLElement).style.color = 'hsl(var(--text-low))')
+      }
     >
       {isZh ? 'EN' : '中'}
     </button>
-  )
+  );
 }

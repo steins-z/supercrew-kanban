@@ -7,7 +7,16 @@
     "dev": "concurrently -n backend,frontend -c blue,green \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
     "dev:backend": "cd backend && bun run src/index.ts",
     "dev:frontend": "cd frontend/packages/local-web && pnpm dev",
-    "typecheck": "cd backend && pnpm run typecheck"
+    "typecheck": "cd backend && pnpm run typecheck",
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "lint": "eslint ."
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   },
   "dependencies": {
     "@hono/node-server": "^1.19.9",
@@ -15,6 +24,15 @@
     "hono": "^4.12.3"
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
-  }
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "concurrently": "^9.0.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.2",
+    "prettier": "^3.6.1"
+  },
+  "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903"
 }

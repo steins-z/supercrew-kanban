@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+.pnpm-store
+dist
+build
+
+# Build outputs
+*.log
+*.tsbuildinfo
+
+# Generated files
+.routeTree.gen.ts
+routeTree.gen.ts
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Cache
+.cache
+.vite
+.turbo
+
+# Config files
+*.config.js
+*.config.ts
+vite.config.ts
+tailwind.config.ts
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode
+.idea
+
+# SuperCrew
+.supercrew

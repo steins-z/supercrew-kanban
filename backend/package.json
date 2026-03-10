@@ -10,6 +10,7 @@
   "dependencies": {
     "@types/node": "^25.3.3",
     "hono": "^4.12.3",
+    "simple-git": "^3.27.0",
     "typescript": "^5.0.0"
   },
   "devDependencies": {
